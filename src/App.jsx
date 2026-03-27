@@ -28,6 +28,13 @@ const sectionTitleStyle = {
   letterSpacing: "0.2px",
 };
 
+const isSameArray = (a = [], b = []) => {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  return a.every((item, index) => item === b[index]);
+};
+
 const SavedNoteCard = memo(function SavedNoteCard({
   item,
   handleEdit,
@@ -84,6 +91,35 @@ const SavedNoteCard = memo(function SavedNoteCard({
     letterSpacing: "0.1px",
   };
 
+const getMainWheelNoteLabel = (item) => {
+  // 3周目がある場合 → それを表示
+  if (item.label && item.label !== item.parentTop && item.label !== item.parentMid) {
+    return item.label;
+  }
+
+  // 3周目なし → 2周目
+  if (item.parentMid) {
+    return item.parentMid;
+  }
+
+  // fallback
+  return item.parentTop;
+};
+
+const savedFlavorNotes =
+  item.secondarySelections && item.secondarySelections.length > 0
+    ? item.secondarySelections
+    : item.mainSelections && item.mainSelections.length > 0
+    ? item.mainSelections
+    : [];
+
+  const savedCupProfile =
+    item.cupProfileSelections && item.cupProfileSelections.length > 0
+      ? item.cupProfileSelections
+      : item.cupProfile && item.cupProfile.length > 0
+      ? item.cupProfile
+      : [];
+
   return (
     <div
       style={{
@@ -132,11 +168,16 @@ const SavedNoteCard = memo(function SavedNoteCard({
         </div>
 
         <div style={{ gridColumn: "1 / -1", marginTop: 2 }}>
-          <span style={labelStyle}>Flavor Note:</span>{" "}
+          <span style={labelStyle}>Selected Flavors:</span>{" "}
           <span style={flavorStyle}>
-            {item.secondarySelections?.length
-              ? item.secondarySelections.join(", ")
-              : "-"}
+            {savedFlavorNotes.length > 0 ? savedFlavorNotes.join(", ") : "-"}
+          </span>
+        </div>
+
+        <div style={{ gridColumn: "1 / -1", marginTop: 2 }}>
+          <span style={labelStyle}>Cup Profile:</span>{" "}
+          <span style={flavorStyle}>
+            {savedCupProfile.length > 0 ? savedCupProfile.join(", ") : "-"}
           </span>
         </div>
       </div>
@@ -164,49 +205,63 @@ const SavedNoteCard = memo(function SavedNoteCard({
 });
 
 function App() {
-  const [country, setCountry] = useState("");
-  const [farm, setFarm] = useState("");
-  const [roastDate, setRoastDate] = useState("");
-  const [variety, setVariety] = useState("");
-  const [dripper, setDripper] = useState("");
-  const [process, setProcess] = useState("");
-  const [lang, setLang] = useState("en");
+const [country, setCountry] = useState("");
+const [farm, setFarm] = useState("");
+const [roastDate, setRoastDate] = useState("");
+const [variety, setVariety] = useState("");
+const [dripper, setDripper] = useState("");
+const [process, setProcess] = useState("");
+const [roaster, setRoaster] = useState("");
+const [memo, setMemo] = useState("");
+const [lang, setLang] = useState("en");
+
   const [cupProfileSelections, setCupProfileSelections] = useState([]);
   const [mainSelections, setMainSelections] = useState([]);
   const [secondarySelections, setSecondarySelections] = useState([]);
   const [savedNotes, setSavedNotes] = useState([]);
+  const [wheelResetKey, setWheelResetKey] = useState(0);
 
   const changeLang = (newLang) => {
     setLang(newLang);
   };
 
-  const resetForm = () => {
-    setCountry("");
-    setFarm("");
-    setRoastDate("");
-    setVariety("");
-    setDripper("");
-    setProcess("");
-    setLang("en");
+const resetForm = () => {
+  setCountry("");
+  setFarm("");
+  setRoastDate("");
+  setVariety("");
+  setDripper("");
+  setProcess("");
+  setRoaster("");
+  setMemo("");
+  setLang("en");
+
     setCupProfileSelections([]);
     setMainSelections([]);
     setSecondarySelections([]);
 
     localStorage.removeItem("coffee-note-current");
+    setWheelResetKey((prev) => prev + 1);
   };
 
   useEffect(() => {
     const savedCurrent = localStorage.getItem("coffee-note-current");
     if (savedCurrent) {
       const data = JSON.parse(savedCurrent);
-      setCountry(data.country || "");
-      setFarm(data.farm || "");
-      setRoastDate(data.roastDate || "");
-      setVariety(data.variety || "");
-      setDripper(data.dripper || "");
-      setProcess(data.process || "");
-      setLang(data.lang || "en");
-      setCupProfileSelections(data.cupProfileSelections || []);
+
+ setCountry(data.country || "");
+setFarm(data.farm || "");
+setRoastDate(data.roastDate || "");
+setVariety(data.variety || "");
+setDripper(data.dripper || "");
+setProcess(data.process || "");
+setRoaster(data.roaster || "");
+setMemo(data.memo || "");
+setLang(data.lang || "en");
+
+      setCupProfileSelections(
+        data.cupProfileSelections || data.cupProfile || []
+      );
       setMainSelections(data.mainSelections || []);
       setSecondarySelections(data.secondarySelections || []);
     }
@@ -218,67 +273,75 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const currentNote = {
-      country,
-      farm,
-      roastDate,
-      variety,
-      dripper,
-      process,
-      lang,
-      cupProfileSelections,
-      mainSelections,
-      secondarySelections,
-    };
+const currentNote = {
+  country,
+  farm,
+  roastDate,
+  variety,
+  dripper,
+  process,
+  roaster,
+  memo,
+  lang,
+  cupProfileSelections,
+  mainSelections,
+  secondarySelections,
+};
 
     localStorage.setItem("coffee-note-current", JSON.stringify(currentNote));
-  }, [
+}, [
+  country,
+  farm,
+  roastDate,
+  variety,
+  dripper,
+  process,
+  roaster,
+  memo,
+  lang,
+  cupProfileSelections,
+  mainSelections,
+  secondarySelections,
+]);
+
+const handleSave = () => {
+  const isAllEmpty =
+    !country.trim() &&
+    !farm.trim() &&
+    !roastDate.trim() &&
+    !variety.trim() &&
+    !dripper.trim() &&
+    !process.trim() &&
+    !roaster.trim() &&
+    !memo.trim() &&
+    cupProfileSelections.length === 0 &&
+    mainSelections.length === 0 &&
+    secondarySelections.length === 0;
+
+  if (isAllEmpty) return;
+
+  const newNote = {
+    id: Date.now(),
     country,
     farm,
     roastDate,
     variety,
     dripper,
     process,
+    roaster,
+    memo,
     lang,
-    cupProfileSelections,
-    mainSelections,
-    secondarySelections,
-  ]);
-
-  const handleSave = () => {
-    const isAllEmpty =
-      !country.trim() &&
-      !farm.trim() &&
-      !roastDate.trim() &&
-      !variety.trim() &&
-      !dripper.trim() &&
-      !process.trim() &&
-      cupProfileSelections.length === 0 &&
-      mainSelections.length === 0 &&
-      secondarySelections.length === 0;
-
-    if (isAllEmpty) return;
-
-    const newNote = {
-      id: Date.now(),
-      country,
-      farm,
-      roastDate,
-      variety,
-      dripper,
-      process,
-      lang,
-      cupProfileSelections: [...cupProfileSelections],
-      mainSelections: [...mainSelections],
-      secondarySelections: [...secondarySelections],
-    };
-
-    const updated = [newNote, ...savedNotes];
-    setSavedNotes(updated);
-    localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
-
-    resetForm();
+    cupProfileSelections: [...cupProfileSelections],
+    mainSelections: [...mainSelections],
+    secondarySelections: [...secondarySelections],
   };
+
+  const updated = [newNote, ...savedNotes];
+  setSavedNotes(updated);
+  localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
+
+  resetForm();
+};
 
   const handleDelete = (id) => {
     const updated = savedNotes.filter((item) => item.id !== id);
@@ -286,15 +349,48 @@ function App() {
     localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
   };
 
+  const handleSecondaryChange = (payload = {}) => {
+    const nextCupProfile = Array.isArray(payload.cupProfileSelections)
+      ? payload.cupProfileSelections
+      : Array.isArray(payload.cupProfile)
+      ? payload.cupProfile
+      : null;
+
+    if (nextCupProfile) {
+      setCupProfileSelections((prev) =>
+        isSameArray(prev, nextCupProfile) ? prev : nextCupProfile
+      );
+    }
+
+    if (Array.isArray(payload.mainSelections)) {
+      setMainSelections((prev) =>
+        isSameArray(prev, payload.mainSelections) ? prev : payload.mainSelections
+      );
+    }
+
+    if (Array.isArray(payload.secondarySelections)) {
+      setSecondarySelections((prev) =>
+        isSameArray(prev, payload.secondarySelections)
+          ? prev
+          : payload.secondarySelections
+      );
+    }
+  };
+
   const handleEdit = (item) => {
-    setCountry(item.country || "");
-    setFarm(item.farm || "");
-    setRoastDate(item.roastDate || "");
-    setVariety(item.variety || "");
-    setDripper(item.dripper || "");
-    setProcess(item.process || "");
-    setLang(item.lang || "en");
-    setCupProfileSelections(item.cupProfileSelections || []);
+setCountry(item.country || "");
+setFarm(item.farm || "");
+setRoastDate(item.roastDate || "");
+setVariety(item.variety || "");
+setDripper(item.dripper || "");
+setProcess(item.process || "");
+setRoaster(item.roaster || "");
+setMemo(item.memo || "");
+setLang(item.lang || "en");
+
+    setCupProfileSelections(
+      item.cupProfileSelections || item.cupProfile || []
+    );
     setMainSelections(item.mainSelections || []);
     setSecondarySelections(item.secondarySelections || []);
   };
@@ -368,13 +464,14 @@ function App() {
             }}
           >
             <FlavorWheel
+              key={wheelResetKey}
               mainSelections={mainSelections}
               setMainSelections={setMainSelections}
               secondarySelections={secondarySelections}
               setSecondarySelections={setSecondarySelections}
-              onSecondaryChange={({ cupProfile }) => {
-                setCupProfileSelections(cupProfile || []);
-              }}
+              cupProfileSelections={cupProfileSelections}
+              setCupProfileSelections={setCupProfileSelections}
+              onSecondaryChange={handleSecondaryChange}
             />
           </div>
         </div>
@@ -390,33 +487,68 @@ function App() {
         >
           <div
             style={{
-              background: "#fff",
-              borderRadius: 16,
-              padding: 20,
-              border: "1px solid #e5ded3",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 14,
+              gap: 12,
             }}
           >
-            <h2 style={sectionTitleStyle}>Language</h2>
+  <h2
+    style={{
+      ...sectionTitleStyle,
+      marginBottom: 0,
+    }}
+  >
+    Tasting Info
+  </h2>
 
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              <button onClick={() => changeLang("en")} style={languageButtonStyle}>
-                English
-              </button>
-              <button onClick={() => changeLang("ja")} style={languageButtonStyle}>
-                日本語
-              </button>
-              <button onClick={() => changeLang("es")} style={languageButtonStyle}>
-                Español
-              </button>
-            </div>
-          </div>
+  <div
+    style={{
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+    }}
+  >
+    <button
+      onClick={() => changeLang("en")}
+      style={{
+        ...languageButtonStyle,
+        height: 24,
+        padding: "0 8px",
+        fontSize: 11,
+        borderRadius: 999,
+      }}
+    >
+      EN
+    </button>
+    <button
+      onClick={() => changeLang("ja")}
+      style={{
+        ...languageButtonStyle,
+        height: 24,
+        padding: "0 8px",
+        fontSize: 11,
+        borderRadius: 999,
+      }}
+    >
+      JP
+    </button>
+    <button
+      onClick={() => changeLang("es")}
+      style={{
+        ...languageButtonStyle,
+        height: 24,
+        padding: "0 8px",
+        fontSize: 11,
+        borderRadius: 999,
+      }}
+    >
+      ES
+    </button>
+  </div>
+</div>
 
           <div
             style={{
@@ -426,7 +558,6 @@ function App() {
               border: "1px solid #e5ded3",
             }}
           >
-            <h2 style={sectionTitleStyle}>Tasting Info</h2>
 
             <div
               style={{
@@ -485,15 +616,28 @@ function App() {
                 />
               </div>
 
-              <div>
-                <label style={infoLabelStyle}>Process</label>
-                <input
-                  type="text"
-                  value={process}
-                  onChange={(e) => setProcess(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
+             <div>
+  <label style={infoLabelStyle}>Roaster</label>
+  <input
+    type="text"
+    value={roaster}
+    onChange={(e) => setRoaster(e.target.value)}
+    style={inputStyle}
+  />
+</div>
+<div style={{ gridColumn: "1 / -1" }}>
+  <label style={infoLabelStyle}>Memo</label>
+  <textarea
+    value={memo}
+    onChange={(e) => setMemo(e.target.value)}
+    style={{
+      ...inputStyle,
+      minHeight: 96,
+      resize: "vertical",
+      fontFamily: "inherit",
+    }}
+  />
+</div>
             </div>
 
             <div
