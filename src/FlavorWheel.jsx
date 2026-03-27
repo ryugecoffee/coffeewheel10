@@ -319,7 +319,7 @@ function FlavorWheel({
   const secondaryStartAngle = -82 + secondaryRotationOffset;
   const secondaryEndAngle = 83 + secondaryRotationOffset;
 
-  const secondaryRing1Inner = 105;
+  const secondaryRing1Inner = 90;
   const secondaryRing1Outer = 180;
   const secondaryRing2Inner = 184;
   const secondaryRing2Outer = 248;
@@ -414,14 +414,15 @@ function FlavorWheel({
           const leafEnd = leafAngle + leafSpan;
 
           if (hasOuterBlock) {
-            ring3Segments.push({
-              label: leaf,
-              color: mid.color,
-              start: leafStart,
-              end: leafEnd,
-              parentTop: top.label,
-              parentMid: mid.label,
-            });
+       ring3Segments.push({
+  id: `${top.label}-${mid.label}-${leaf}`,
+  label: leaf,
+  color: mid.color,
+  start: leafStart,
+  end: leafEnd,
+  parentTop: top.label,
+  parentMid: mid.label,
+});
           }
 
           leafAngle += leafSpan;
@@ -497,22 +498,22 @@ function FlavorWheel({
           const leafAngle = (innerEnd - innerStart) / leaves.length;
 
           leaves.forEach((leaf, leafIndex) => {
-            const leafStart = innerStart + leafAngle * leafIndex;
-            const leafEnd = leafStart + leafAngle;
+  const leafStart = innerStart + leafAngle * leafIndex;
+  const leafEnd = leafStart + leafAngle;
 
-            secondaryLeafSegments.push({
-              label: leaf,
-              color: inner.color || mid.color,
-              start: leafStart,
-              end: leafEnd,
-              parentTop: top.label,
-              parentMid: mid.label,
-              parentInner: inner.label,
-            });
-          });
+  secondaryLeafSegments.push({
+    id: `${mid.label}-${inner.label}-${leaf}`,
+    label: leaf,
+    color: inner.color || mid.color,
+    start: leafStart,
+    end: leafEnd,
+    parentTop: top.label,
+    parentMid: mid.label,
+    parentInner: inner.label,
+  });
+});
         });
       } else {
-
         const leaves = midChildren.length > 0 ? midChildren : [mid.label];
         const leafAngle = (midEnd - midStart) / leaves.length;
 
@@ -520,59 +521,65 @@ function FlavorWheel({
           const leafStart = midStart + leafAngle * leafIndex;
           const leafEnd = leafStart + leafAngle;
 
-          secondaryLeafSegments.push({
-            label: leaf,
-            color: mid.color,
-            start: leafStart,
-            end: leafEnd,
-            parentTop: top.label,
-            parentMid: mid.label,
-            parentInner: null,
-          });
+secondaryLeafSegments.push({
+  id: `${mid.label}-none-${leaf}`,
+  label: leaf,
+  color: mid.color,
+  start: leafStart,
+  end: leafEnd,
+  parentTop: top.label,
+  parentMid: mid.label,
+  parentInner: null,
+});
         });
       }
     });
   }
-const secondaryLeafBlockSegments = useMemo(() => {
-  const grouped = new Map();
 
-  secondaryLeafSegments.forEach((seg) => {
-    if (seg.parentMid === "AROMA" || seg.parentMid === "AFTERTASTE") return;
+  const secondaryLeafBlockSegments = useMemo(() => {
+    const grouped = new Map();
 
-    const key = seg.parentInner || seg.parentMid;
+    secondaryLeafSegments.forEach((seg) => {
+      if (seg.parentMid === "AROMA" || seg.parentMid === "AFTERTASTE") return;
 
-    if (!grouped.has(key)) {
-      grouped.set(key, {
-        ...seg,
-        start: seg.start,
-        end: seg.end,
-      });
-      return;
-    }
+      const key = seg.parentInner || seg.parentMid;
 
-    const existing = grouped.get(key);
-    existing.start = Math.min(existing.start, seg.start);
-    existing.end = Math.max(existing.end, seg.end);
-  });
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          ...seg,
+          start: seg.start,
+          end: seg.end,
+        });
+        return;
+      }
 
-  return Array.from(grouped.values());
-}, [secondaryLeafSegments]);
+      const existing = grouped.get(key);
+      existing.start = Math.min(existing.start, seg.start);
+      existing.end = Math.max(existing.end, seg.end);
+    });
+
+    return Array.from(grouped.values());
+  }, [secondaryLeafSegments]);
+
   useEffect(() => {
     if (isSecondaryWheel) {
       const validTopLabels = secondaryTopSegments.map((seg) => seg.label);
       const validMidLabels = secondaryMidSegments.map((seg) => seg.label);
-      const validLeafLabels = secondaryLeafSegments.map((seg) => seg.label);
+const validLeafIds = secondaryLeafSegments.map((seg) => seg.id);
 
-      setMainSelections((prev) =>
-        prev.filter((label) => validTopLabels.includes(label))
-      );
-      setSelectedMids((prev) =>
-        prev.filter((label) => validMidLabels.includes(label))
-      );
-      setSecondarySelections((prev) =>
-        prev.filter((label) => validLeafLabels.includes(label))
-      );
-      return;
+setSelectedMids((prev) =>
+  prev.filter(
+    (label) =>
+      validMidLabels.includes(label) ||
+      secondaryInnerSegments.some((inner) => inner.label === label)
+  )
+);
+
+setSecondarySelections((prev) =>
+  prev.filter((id) => validLeafIds.includes(id))
+);
+
+return;
     }
 
     const validTopLabels = ring1Segments.map((seg) => seg.label);
@@ -602,15 +609,15 @@ const secondaryLeafBlockSegments = useMemo(() => {
       .filter((seg) => {
         if (!mainSelections.includes(seg.parentTop)) return false;
 
-        if (!seg.hasOuterBlock) {
-          return secondarySelections.includes(seg.label);
-        }
+if (!seg.hasOuterBlock) {
+  return secondarySelections.includes(seg.label);
+}
 
-        return ring3Segments.some(
-          (leaf) =>
-            leaf.parentMid === seg.label &&
-            secondarySelections.includes(leaf.label)
-        );
+return ring3Segments.some(
+  (leaf) =>
+    leaf.parentMid === seg.label &&
+    secondarySelections.includes(leaf.label)
+);
       })
       .map((seg) => seg.label);
 
@@ -657,71 +664,129 @@ const secondaryLeafBlockSegments = useMemo(() => {
     );
   };
 
-  const handleMidClick = (seg) => {
-    if (isSecondaryWheel) {
-      if (!mainSelections.includes(seg.parentTop)) return;
+const handleInnerClick = (seg) => {
+  if (!isSecondaryWheel) return;
 
-      const willSelect = !selectedMids.includes(seg.label);
-      const nextMids = toggleInArray(selectedMids, seg.label);
-      setSelectedMids(nextMids);
+  setMainSelections([seg.parentTop]);
 
-      const leavesToToggle = secondaryLeafSegments
-        .filter((leaf) => leaf.parentMid === seg.label)
-        .map((leaf) => leaf.label);
+  setSelectedMids((prev) => {
+    const next = prev.includes(seg.label)
+      ? prev.filter((v) => v !== seg.label)
+      : [...prev, seg.label];
 
-      if (!willSelect) {
-        setSecondarySelections((prev) =>
-          prev.filter((leaf) => !leavesToToggle.includes(leaf))
-        );
-        return;
-      }
+    return next.includes(seg.parentMid) ? next : [...next, seg.parentMid];
+  });
 
-      setSecondarySelections((prev) => {
-        const next = [...prev];
-        leavesToToggle.forEach((leaf) => {
-          if (!next.includes(leaf)) next.push(leaf);
-        });
-        return next;
+  setSecondarySelections((prev) =>
+    prev.filter((id) => {
+      const leaf = secondaryLeafSegments.find((item) => item.id === id);
+      if (!leaf) return true;
+
+      return leaf.parentInner !== seg.label;
+    })
+  );
+};
+
+const handleMidClick = (seg) => {
+if (isSecondaryWheel) {
+  setMainSelections([seg.parentTop]);
+
+  setSelectedMids((prev) => {
+    const isAlreadySelected = prev.includes(seg.label);
+
+    if (isAlreadySelected) {
+      const next = prev.filter((v) => v !== seg.label);
+
+      const stillHasChild = secondaryInnerSegments.some(
+        (inner) => inner.parentMid === seg.label && next.includes(inner.label)
+      );
+
+      return stillHasChild ? next : next;
+    }
+
+    return [...prev, seg.label];
+  });
+
+  return;
+}
+
+  if (!mainSelections.includes(seg.parentTop)) return;
+
+  const willSelect = !selectedMids.includes(seg.label);
+  const nextMids = toggleInArray(selectedMids, seg.label);
+  setSelectedMids(nextMids);
+
+  if (!willSelect) {
+    const childLeaves = ring3Segments
+      .filter((leaf) => leaf.parentMid === seg.label)
+      .map((leaf) => leaf.label);
+
+    setSecondarySelections((prev) =>
+      prev.filter((leaf) => leaf !== seg.label && !childLeaves.includes(leaf))
+    );
+    return;
+  }
+
+  if (!seg.hasOuterBlock) {
+    setSecondarySelections((prev) =>
+      prev.includes(seg.label) ? prev : [...prev, seg.label]
+    );
+  }
+};
+
+const handleLeafClick = (seg) => {
+  if (isSecondaryWheel) {
+  const canClick = seg.parentInner
+    ? selectedMids.includes(seg.parentInner)
+    : selectedMids.includes(seg.parentMid);
+
+  if (!canClick) return;
+
+  setSecondarySelections((prev) => {
+    const next = prev.filter((label) => {
+      const item = secondaryLeafSegments.find((leaf) => leaf.id === label);
+      if (!item) return true;
+
+      const sameGroup = seg.parentInner
+        ? item.parentInner === seg.parentInner
+        : item.parentMid === seg.parentMid;
+
+      return !sameGroup;
+    });
+
+    return [...next, seg.id];
+  });
+  return;
+}
+
+if (!mainSelections.includes(seg.parentTop)) return;
+
+  if (isSecondaryWheel) {
+    setSecondarySelections((prev) => {
+      const next = prev.filter((label) => {
+        const item = secondaryLeafSegments.find((leaf) => leaf.id === label);
+        if (!item) return true;
+
+        const sameGroup = seg.parentInner
+          ? item.parentInner === seg.parentInner
+          : item.parentMid === seg.parentMid;
+
+        return !sameGroup;
       });
-      return;
-    }
 
-    if (!mainSelections.includes(seg.parentTop)) return;
+      return [...next, seg.id];
+    });
+    return;
+  }
 
-    const willSelect = !selectedMids.includes(seg.label);
-    const nextMids = toggleInArray(selectedMids, seg.label);
-    setSelectedMids(nextMids);
+if (!selectedMids.includes(seg.parentMid)) return;
 
-    if (!willSelect) {
-      const childLeaves = ring3Segments
-        .filter((leaf) => leaf.parentMid === seg.label)
-        .map((leaf) => leaf.label);
+setSelectedMids((prev) =>
+  prev.includes(seg.parentMid) ? prev : [...prev, seg.parentMid]
+);
 
-      setSecondarySelections((prev) =>
-        prev.filter((leaf) => leaf !== seg.label && !childLeaves.includes(leaf))
-      );
-      return;
-    }
-
-    if (!seg.hasOuterBlock) {
-      setSecondarySelections((prev) =>
-        prev.includes(seg.label) ? prev : [...prev, seg.label]
-      );
-    }
-  };
-
-  const handleLeafClick = (seg) => {
-    if (!mainSelections.includes(seg.parentTop)) return;
-
-    if (isSecondaryWheel) {
-      if (!selectedMids.includes(seg.parentMid)) return;
-      setSecondarySelections((prev) => toggleInArray(prev, seg.label));
-      return;
-    }
-
-    if (!selectedMids.includes(seg.parentMid)) return;
-    setSecondarySelections((prev) => toggleInArray(prev, seg.label));
-  };
+setSecondarySelections((prev) => toggleInArray(prev, seg.label));
+};
 
   const hasSelectedTop = mainSelections.length > 0;
   const hasSelectedMid = selectedMids.length > 0;
@@ -800,21 +865,14 @@ const secondaryLeafBlockSegments = useMemo(() => {
     return selectedMids.includes(seg.label) ? 1 : 0.18;
   };
 
-  const getSecondaryRing3Opacity = (seg) => {
-    if (!hasSelectedTop) return 0.92;
-    if (!mainSelections.includes(seg.parentTop)) return 0.08;
-    if (!hasSelectedMid) return 0.32;
-    if (!selectedMids.includes(seg.parentMid)) return 0.08;
+const getSecondaryRing3Opacity = (seg) => {
+  if (!hasSelectedTop) return 0.92;
+  if (!mainSelections.includes(seg.parentTop)) return 0.08;
+  if (!hasSelectedMid) return 0.32;
+  if (!selectedMids.includes(seg.parentMid)) return 0.08;
 
-    const selectedInGroup = secondarySelections.filter((label) =>
-      secondaryLeafSegments.some(
-        (item) => item.parentMid === seg.parentMid && item.label === label
-      )
-    );
-
-    if (selectedInGroup.length === 0) return 0.45;
-    return secondarySelections.includes(seg.label) ? 1 : 0.18;
-  };
+  return secondarySelections.includes(seg.id)? 1 : 0.18;
+};
 
   const getSecondaryRing2TextColor = (seg) => {
     if (!hasSelectedTop) return "#ffffff";
@@ -827,7 +885,7 @@ const secondaryLeafBlockSegments = useMemo(() => {
     if (!mainSelections.includes(seg.parentTop)) return "#d5cec4";
     if (!hasSelectedMid) return "#2f2a24";
     if (!selectedMids.includes(seg.parentMid)) return "#d5cec4";
-    return secondarySelections.includes(seg.label) ? "#111111" : "#8d867b";
+    return secondarySelections.includes(seg.id) ? "#111111" : "#8d867b";
   };
 
   const finalSelections = secondarySelections;
@@ -894,43 +952,28 @@ const secondaryLeafBlockSegments = useMemo(() => {
         >
           {isSecondaryWheel ? (
             <>
-{secondaryLeafBlockSegments.map((seg, index) => {
-  if (seg.parentMid === "AROMA" || seg.parentMid === "AFTERTASTE") return null;
+              {secondaryLeafBlockSegments.map((seg, index) => {
+                if (seg.parentMid === "AROMA" || seg.parentMid === "AFTERTASTE")
+                  return null;
 
-  const isClickable =
-    mainSelections.includes(seg.parentTop) &&
-    selectedMids.includes(seg.parentMid);
-  const isSelected = secondarySelections.includes(seg.label);
+                const isClickable = seg.parentInner
+  ? selectedMids.includes(seg.parentInner)
+  : selectedMids.includes(seg.parentMid);
 
-  return (
-    <path
-      key={`sr4-${index}`}
-      d={arcPath(
-        cx,
-        cy,
-        secondaryRing3Inner,
-        secondaryRing3Outer,
-        seg.start,
-        seg.end
-      )}
-      fill={seg.color}
-      stroke="#e7e3dd"
-      strokeWidth={isSelected ? "4" : "2.5"}
-      opacity={getSecondaryRing3Opacity(seg)}
-      onClick={isClickable ? () => handleLeafClick(seg) : undefined}
-      style={{ cursor: isClickable ? "pointer" : "default" }}
-    />
-  );
-})}
+                const groupLeaves = secondaryLeafSegments
+                  .filter((leaf) => {
+                    if (seg.parentInner) {
+                      return leaf.parentInner === seg.parentInner;
+                    }
+                    return leaf.parentMid === seg.parentMid;
+                  })
+                  .map((leaf) => leaf.label);
 
-              {secondaryInnerSegments.map((seg, index) => {
-                const isClickable =
-                  mainSelections.includes(seg.parentTop) &&
-                  selectedMids.includes(seg.parentMid);
+const isSelected = false;
 
                 return (
                   <path
-                    key={`sr3-${index}`}
+                    key={`sr4-${index}`}
                     d={arcPath(
                       cx,
                       cy,
@@ -941,37 +984,67 @@ const secondaryLeafBlockSegments = useMemo(() => {
                     )}
                     fill={seg.color}
                     stroke="#e7e3dd"
-                    strokeWidth="3"
-                    opacity={isClickable ? 0.95 : 0.15}
-                    style={{ cursor: isClickable ? "pointer" : "default" }}
+                    strokeWidth={isSelected ? "4" : "2.5"}
+opacity={selectedMids.includes(seg.parentMid) ? 0.45 : 0.18}
+                    onClick={
+                      isClickable
+                        ? () => handleSecondaryLeafBlockClick(seg)
+                        : undefined
+                    }
+                    style={{ cursor: "default" }}
                   />
                 );
               })}
+
+{secondaryInnerSegments.map((seg, index) => {
+  const isClickable = selectedMids.includes(seg.parentMid);
+  const isSelected = selectedMids.includes(seg.label);
+
+  return (
+    <path
+      key={`sr3-${index}`}
+      d={arcPath(
+        cx,
+        cy,
+        secondaryRing3Inner,
+        secondaryRing3Outer,
+        seg.start,
+        seg.end
+      )}
+      fill={seg.color}
+      stroke="#e7e3dd"
+      strokeWidth={isSelected ? "5" : "3"}
+      opacity={isSelected ? 1 : isClickable ? 0.65 : 0.25}
+      onClick={isClickable ? () => handleInnerClick(seg) : undefined}
+      style={{ cursor: isClickable ? "pointer" : "default" }}
+    />
+  );
+})}
 
               {secondaryMidSegments.map((seg, index) => {
-                const isClickable = mainSelections.includes(seg.parentTop);
-                const isSelected = selectedMids.includes(seg.label);
+  const isClickable = true;
+  const isSelected = selectedMids.includes(seg.label);
 
-                return (
-                  <path
-                    key={`sr2-${index}`}
-                    d={arcPath(
-                      cx,
-                      cy,
-                      secondaryRing2Inner,
-                      secondaryRing2Outer,
-                      seg.start,
-                      seg.end
-                    )}
-                    fill={seg.color}
-                    stroke="#e7e3dd"
-                    strokeWidth={isSelected ? "5" : "3"}
-                    opacity={getSecondaryRing2Opacity(seg)}
-                    onClick={isClickable ? () => handleMidClick(seg) : undefined}
-                    style={{ cursor: isClickable ? "pointer" : "default" }}
-                  />
-                );
-              })}
+  return (
+    <path
+      key={`sr2-${index}`}
+      d={arcPath(
+        cx,
+        cy,
+        secondaryRing2Inner,
+        secondaryRing2Outer,
+        seg.start,
+        seg.end
+      )}
+      fill={seg.color}
+      stroke="#e7e3dd"
+      strokeWidth={isSelected ? "5" : "3"}
+      opacity={getSecondaryRing2Opacity(seg)}
+      onClick={() => handleMidClick(seg)}
+      style={{ cursor: "pointer" }}
+    />
+  );
+})}
 
               {secondaryTopSegments.map((seg, index) => {
                 const isSelected = mainSelections.includes(seg.label);
@@ -1021,7 +1094,9 @@ const secondaryLeafBlockSegments = useMemo(() => {
 
               {ring2Segments.map((seg, index) => {
                 const isClickable = mainSelections.includes(seg.parentTop);
-                const isSelected = selectedMids.includes(seg.label);
+                const isSelected =
+  selectedMids.includes(seg.label) ||
+  (!seg.hasOuterBlock && secondarySelections.includes(seg.label));
 
                 return (
                   <path
@@ -1107,40 +1182,44 @@ const secondaryLeafBlockSegments = useMemo(() => {
             </text>
           </g>
 
-          {activeWheel === "main" &&
-            ring1Segments.map((seg, index) => {
-              const midAngle = (seg.start + seg.end) / 2;
-              const pos = textPoint(cx, cy, 130, midAngle);
-              const lines = seg.label.split("\n");
+{activeWheel === "main" &&
+  ring1Segments.map((seg, index) => {
+    const midAngle = (seg.start + seg.end) / 2;
+    const pos = textPoint(cx, cy, 130, midAngle);
+    const rotation = getTextRotation(midAngle);
+    const lines = seg.label.split("\n");
 
-              return (
-                <g key={`t1-${index}`}>
-                  {lines.map((line, i) => (
-                    <text
-                      key={i}
-                      x={pos.x}
-                      y={pos.y + i * 14 - ((lines.length - 1) * 14) / 2}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fill={
-                        hasSelectedTop && !mainSelections.includes(seg.label)
-                          ? "#d8d2ca"
-                          : "#ffffff"
-                      }
-                      fontSize="13"
-                      fontWeight="700"
-                      style={{
-                        letterSpacing: "0.5px",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                      }}
-                    >
-                      {line}
-                    </text>
-                  ))}
-                </g>
-              );
-            })}
+    return (
+      <g
+        key={`t1-${index}`}
+        transform={`rotate(${rotation} ${pos.x} ${pos.y})`}
+      >
+        {lines.map((line, i) => (
+          <text
+            key={i}
+            x={pos.x}
+            y={pos.y + i * 14 - ((lines.length - 1) * 14) / 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill={
+              hasSelectedTop && !mainSelections.includes(seg.label)
+                ? "#d8d2ca"
+                : "#ffffff"
+            }
+            fontSize="11"
+            fontWeight="700"
+            style={{
+              letterSpacing: "0.5px",
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {line}
+          </text>
+        ))}
+      </g>
+    );
+  })}
 
           {activeWheel === "main" &&
             ring2Segments.map((seg, index) => {
@@ -1208,92 +1287,102 @@ const secondaryLeafBlockSegments = useMemo(() => {
               );
             })}
 
-          {isSecondaryWheel &&
-            secondaryTopSegments.map((seg, index) => {
-              const midAngle = (seg.start + seg.end) / 3;
-              const pos = textPoint(cx, cy, secondaryRing1TextRadius, midAngle);
-              const rotation = getTextRotation(midAngle);
-              const lines = seg.label.split("\n");
+{isSecondaryWheel &&
+  secondaryTopSegments.map((seg, index) => {
+    const midAngle = (seg.start + seg.end) / 2;
 
-              return (
-                <g
-                  key={`st1-${index}`}
-                  
-                >
-                  {lines.map((line, i) => (
-                    <text
-                      key={i}
-                      x={pos.x}
-                      y={pos.y + i * 15 - ((lines.length - 1) * 15) / 2}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fill="#ffffff"
-                      fontSize="15"
-                      fontWeight="700"
-                      style={{
-                        letterSpacing: "0.4px",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                      }}
-                    >
-                      {line}
-                    </text>
-                  ))}
-                </g>
-              );
-            })}
+    const textArcRadius = secondaryRing1TextRadius;
+    const textStart = seg.start + 10;
+    const textEnd = seg.end - 10;
 
-          {isSecondaryWheel &&
-            secondaryMidSegments.map((seg, index) => {
-              const midAngle = (seg.start + seg.end) / 2;
-              const pos = textPoint(cx, cy, secondaryRing2TextRadius, midAngle);
-              const rotation = getTextRotation(midAngle);
-              const lines = seg.label.split("\n");
+    const arcStart = polarToCartesian(cx, cy, textArcRadius, textStart);
+    const arcEnd = polarToCartesian(cx, cy, textArcRadius, textEnd);
+    const largeArcFlag = textEnd - textStart <= 180 ? 0 : 1;
 
-              return (
-                <g
-                  key={`st2-${index}`}
-                  
-                >
-                  {lines.map((line, i) => (
-                    <text
-                      key={i}
-                      x={pos.x}
-                      y={pos.y + i * 12 - ((lines.length - 1) * 12) / 2}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fill={getSecondaryRing2TextColor(seg)}
-                      fontSize="11"
-                      fontWeight="700"
-                      style={{
-                        letterSpacing: "0.3px",
-                        pointerEvents: "none",
-                        userSelect: "none",
-                      }}
-                    >
-                      {line}
-                    </text>
-                  ))}
-                </g>
-              );
-            })}
+    const pathId = `cup-profile-arc-${index}`;
+
+    return (
+      <g key={`st1-${index}`}>
+        <path
+          id={pathId}
+          d={`M ${arcStart.x} ${arcStart.y} A ${textArcRadius} ${textArcRadius} 0 ${largeArcFlag} 1 ${arcEnd.x} ${arcEnd.y}`}
+          fill="none"
+          stroke="none"
+        />
+        <text
+          fill="#ffffff"
+          fontSize="15"
+          fontWeight="700"
+          style={{
+            letterSpacing: "0.4px",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          <textPath
+            href={`#${pathId}`}
+            startOffset="50%"
+            textAnchor="middle"
+            dominantBaseline="middle"
+          >
+            {seg.label}
+          </textPath>
+        </text>
+      </g>
+    );
+  })}
+
+{isSecondaryWheel &&
+  secondaryMidSegments.map((seg, index) => {
+    const midAngle = (seg.start + seg.end) / 2;
+    const pos = textPoint(cx, cy, secondaryRing2TextRadius, midAngle);
+    const lines = seg.label.split("\n");
+    const rotation = midAngle > 180 ? midAngle + 180 : midAngle;
+
+    return (
+      <g
+        key={`st2-${index}`}
+        transform={`translate(${pos.x} ${pos.y}) rotate(${rotation})`}
+      >
+        {lines.map((line, i) => (
+          <text
+            key={i}
+            x={0}
+            y={i * 12 - ((lines.length - 1) * 12) / 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill={getSecondaryRing2TextColor(seg)}
+            fontSize="11"
+            fontWeight="700"
+            style={{
+              letterSpacing: "0.3px",
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            {line}
+          </text>
+        ))}
+      </g>
+    );
+  })}
 
           {isSecondaryWheel &&
             secondaryInnerSegments.map((seg, index) => {
               const midAngle = (seg.start + seg.end) / 2;
               const pos = textPoint(cx, cy, secondaryRing3TextRadius, midAngle);
-              const rotation = getTextRotation(midAngle);
+const rotation = midAngle > 180 ? midAngle + 180 : midAngle;
 
-              return (
-                <g
-                  key={`st3-${index}`}
-                  
-                >
-                  <text
-                    x={pos.x}
-                    y={pos.y}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
+return (
+  <g
+    key={`st3-${index}`}
+    transform={`translate(${pos.x} ${pos.y}) rotate(${rotation})`}
+  >
+    <text
+      x={0}
+      y={0}
+      textAnchor="middle"
+      dominantBaseline="middle"
                     fill="#ffffff"
                     fontSize="10"
                     fontWeight="700"
@@ -1309,35 +1398,59 @@ const secondaryLeafBlockSegments = useMemo(() => {
               );
             })}
 
-          {isSecondaryWheel &&
-            secondaryLeafSegments.map((seg, index) => {
-              const midAngle = (seg.start + seg.end) / 2;
-              const pos = textPoint(cx, cy, secondaryOuterLabelRadius, midAngle);
-              const isLeftSide = midAngle > 180 || midAngle < 0;
-              const rotation = isLeftSide ? midAngle + 90 : midAngle - 90;
-              const anchor = isLeftSide ? "end" : "start";
+{isSecondaryWheel &&
+  secondaryLeafSegments.map((seg, index) => {
+    const midAngle = (seg.start + seg.end) / 2;
+    const isEdge =
+      seg.parentMid === "AROMA" || seg.parentMid === "AFTERTASTE";
+    const radius = isEdge
+      ? secondaryOuterLabelRadius -57
+      : secondaryOuterLabelRadius;
+    const pos = textPoint(cx, cy, radius, midAngle);
+    const isLeftSide = midAngle > 180 || midAngle < 0;
+    const rotation = isLeftSide ? midAngle + 90 : midAngle - 90;
+    const isClickable = seg.parentInner
+  ? selectedMids.includes(seg.parentInner)
+  : selectedMids.includes(seg.parentMid);
+    const isSelected = secondarySelections.includes(seg.id);
 
-              return (
-                <text
-                  key={`st4-${index}`}
-                  x={pos.x}
-                  y={pos.y}
-                  textAnchor={anchor}
-                  dominantBaseline="middle"
-                  transform={`rotate(${rotation} ${pos.x} ${pos.y})`}
-                  fill={getSecondaryRing3TextColor(seg)}
-                  fontSize="10"
-                  fontWeight="700"
-                  style={{
-                    letterSpacing: "0.2px",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                  }}
-                >
-                  {seg.label}
-                </text>
-              );
-            })}
+    return (
+      <g
+        key={`st4-${index}`}
+        transform={`translate(${pos.x} ${pos.y}) rotate(${rotation})`}
+        onClick={isClickable ? () => handleLeafClick(seg) : undefined}
+        style={{ cursor: isClickable ? "pointer" : "default" }}
+      >
+        <rect
+          x={isLeftSide ? 4 : -19}
+          y={-13}
+          width={17}
+          height={25}
+          fill={seg.color}
+          opacity={secondarySelections.includes(seg.id) ? 1 : 0.18}
+          stroke={isSelected ? "#111111" : "none"}
+          strokeWidth={isSelected ? 1.5 : 0}
+        />
+
+        <text
+          x={isLeftSide ? -8 : 8}
+          y={0}
+          textAnchor={isLeftSide ? "end" : "start"}
+          dominantBaseline="middle"
+          fill={getSecondaryRing3TextColor(seg)}
+          fontSize="16"
+          fontWeight="700"
+          style={{
+            letterSpacing: "0.2px",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          {seg.label}
+        </text>
+      </g>
+    );
+  })}
         </svg>
       </div>
 
@@ -1358,7 +1471,7 @@ const secondaryLeafBlockSegments = useMemo(() => {
             color: "#3d3935",
           }}
         >
-          {activeWheel === "main" ? "Selected Flavors" : "Selected Notes"}
+          {activeWheel === "main" ? "Selected Flavors" : "Cup Profile"}
         </h3>
 
         {activeWheel === "main" ? (
@@ -1385,27 +1498,34 @@ const secondaryLeafBlockSegments = useMemo(() => {
               ))}
             </div>
           )
-        ) : derivedSecondarySelections.cupProfile.length === 0 ? (
-          <p style={{ margin: 0, color: "#7a746b", fontSize: 14 }}>
-            Nothing selected yet
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              color: "#3d3935",
-              fontSize: 14,
-              lineHeight: 1.6,
-            }}
-          >
-            <div>
-              <strong>Cup Profile:</strong>{" "}
-              {derivedSecondarySelections.cupProfile.join(", ")}
-            </div>
-          </div>
-        )}
+) : secondarySelections.length === 0 ? (
+  <p style={{ margin: 0, color: "#7a746b", fontSize: 14 }}>
+    Nothing selected yet
+  </p>
+) : (
+  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+    {secondarySelections.map((id) => {
+      const item = secondaryLeafSegments.find((leaf) => leaf.id === id);
+      const label = item ? item.label : id;
+
+      return (
+        <div
+          key={id}
+          style={{
+            padding: "6px 10px",
+            borderRadius: 999,
+            background: "#e7e3dd",
+            color: "#3d3935",
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {label}
+        </div>
+      );
+    })}
+  </div>
+)}
       </div>
     </div>
   );
