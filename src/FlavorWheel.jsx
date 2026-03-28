@@ -1,278 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  wheelConstants,
+  polarToCartesian,
+  arcPath,
+  buildMainWheelSegments,
+  wheelData,
+} from "./wheelGeometry";
 import secondaryWheelData from "./secondaryWheelData";
-
-const wheelData = [
-  {
-    label: "FRUITY",
-    color: "#e53935",
-    children: [
-      {
-        label: "BERRY",
-        color: "#d81b60",
-        children: ["BLACKBERRY", "RASPBERRY", "BLUEBERRY", "STRAWBERRY"],
-      },
-      {
-        label: "DRIED FRUIT",
-        color: "#8e24aa",
-        children: ["RAISIN", "PRUNE"],
-      },
-      {
-        label: "OTHER FRUIT",
-        color: "#f4511e",
-        children: [
-          "COCONUT",
-          "CHERRY",
-          "POMEGRANATE",
-          "PINEAPPLE",
-          "GRAPE",
-          "APPLE",
-          "PEACH",
-          "PEAR",
-        ],
-      },
-      {
-        label: "CITRUS FRUIT",
-        color: "#ffb300",
-        children: ["GRAPEFRUIT", "ORANGE", "LEMON", "LIME"],
-      },
-    ],
-  },
-  {
-    label: "SOUR/\nFERMENTED",
-    color: "#d4d700",
-    children: [
-      {
-        label: "SOUR",
-        color: "#cddc39",
-        children: [
-          "SOUR AROMATICS",
-          "ACETIC ACID",
-          "BUTYRIC ACID",
-          "ISOVALERIC ACID",
-          "CITRIC ACID",
-          "MALIC ACID",
-        ],
-      },
-      {
-        label: "ALCOHOL/\nFERMENTED",
-        color: "#9e9d24",
-        children: ["WINEY", "WHISKEY", "FERMENTED", "OVERRIPE"],
-      },
-    ],
-  },
-  {
-    label: "GREEN/\nVEGETATIVE",
-    color: "#43a047",
-    children: [
-      {
-        label: "OLIVE OIL",
-        color: "#7cb342",
-        children: ["OLIVE OIL"],
-      },
-      {
-        label: "RAW",
-        color: "#8bc34a",
-        children: ["RAW"],
-      },
-      {
-        label: "GREEN/\nVEGETATIVE",
-        color: "#32b44a",
-        children: [
-          "UNDER-RIPE",
-          "PEAPOD",
-          "FRESH",
-          "DARK GREEN",
-          "VEGETATIVE",
-          "HAY-LIKE",
-          "HERB-LIKE",
-        ],
-      },
-      {
-        label: "BEANY",
-        color: "#00a152",
-        children: ["BEANY"],
-      },
-    ],
-  },
-  {
-    label: "OTHER",
-    color: "#26a6d1",
-    children: [
-      {
-        label: "CHEMICAL",
-        color: "#4fc3f7",
-        children: [
-          "RUBBER",
-          "SKUNKY",
-          "PETROLEUM",
-          "MEDICINAL",
-          "SALTY",
-          "BITTER",
-          "CHEMICAL",
-        ],
-      },
-      {
-        label: "PAPERY/\nMUSTY",
-        color: "#90a4ae",
-        children: [
-          "PAPERY",
-          "CARDBOARD",
-          "WOODY",
-          "MOLDY/DAMP",
-          "MUSTY/DUSTY",
-          "MUSTY/EARTHY",
-          "ANIMALIC",
-          "MEATY BROTHY",
-          "PHENOLIC",
-        ],
-      },
-      {
-        label: "STALE",
-        color: "#b0bec5",
-        children: ["STALE"],
-      },
-    ],
-  },
-  {
-    label: "ROASTED",
-    color: "#c62828",
-    children: [
-      {
-        label: "PIPE TOBACCO",
-        color: "#8d6e63",
-        children: ["PIPE TOBACCO"],
-      },
-      {
-        label: "TOBACCO",
-        color: "#a1887f",
-        children: ["TOBACCO"],
-      },
-      {
-        label: "BURNT",
-        color: "#b97c42",
-        children: ["ACRID", "ASHY", "SMOKY", "BROWN ROAST"],
-      },
-      {
-        label: "CEREAL",
-        color: "#d8c72a",
-        children: ["GRAIN", "MALT"],
-      },
-    ],
-  },
-  {
-    label: "SPICES",
-    color: "#ad1457",
-    children: [
-      {
-        label: "PUNGENT",
-        color: "#c2185b",
-        children: ["PUNGENT"],
-      },
-      {
-        label: "PEPPER",
-        color: "#e53935",
-        children: ["PEPPER"],
-      },
-      {
-        label: "BROWN SPICE",
-        color: "#8e2430",
-        children: ["ANISE", "NUTMEG", "CINNAMON", "CLOVE"],
-      },
-    ],
-  },
-  {
-    label: "NUTTY/\nCOCOA",
-    color: "#8d6e63",
-    children: [
-      {
-        label: "NUTTY",
-        color: "#bc8f8f",
-        children: ["PEANUTS", "HAZELNUT", "ALMOND"],
-      },
-      {
-        label: "COCOA",
-        color: "#c57b1e",
-        children: ["CHOCOLATE", "DARK CHOCOLATE"],
-      },
-    ],
-  },
-  {
-    label: "SWEET",
-    color: "#ff6f00",
-    children: [
-      {
-        label: "BROWN SUGAR",
-        color: "#d08159",
-        children: ["MOLASSES", "MAPLE SYRUP", "CARAMELIZED", "HONEY"],
-      },
-      {
-        label: "VANILLA",
-        color: "#f4c28b",
-        children: ["VANILLA"],
-      },
-      {
-        label: "VANILLIN",
-        color: "#ffab91",
-        children: ["VANILLIN"],
-      },
-      {
-        label: "OVERALL SWEET",
-        color: "#ef9a9a",
-        children: ["OVERALL SWEET"],
-      },
-      {
-        label: "SWEET AROMATICS",
-        color: "#d97aa6",
-        children: ["SWEET AROMATICS"],
-      },
-    ],
-  },
-  {
-    label: "FLORAL",
-    color: "#ff00b8",
-    children: [
-      {
-        label: "BLACK TEA",
-        color: "#212121",
-        children: ["BLACK TEA"],
-      },
-      {
-        label: "FLORAL",
-        color: "#ec407a",
-        children: ["CHAMOMILE", "ROSE", "JASMINE"],
-      },
-    ],
-  },
-];
 
 const wheelDataMap = {
   main: wheelData,
   secondary: secondaryWheelData,
 };
-
-function polarToCartesian(cx, cy, r, angleDeg) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  };
-}
-
-function arcPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
-  const outerStart = polarToCartesian(cx, cy, rOuter, startAngle);
-  const outerEnd = polarToCartesian(cx, cy, rOuter, endAngle);
-  const innerEnd = polarToCartesian(cx, cy, rInner, endAngle);
-  const innerStart = polarToCartesian(cx, cy, rInner, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-
-  return `
-    M ${outerStart.x} ${outerStart.y}
-    A ${rOuter} ${rOuter} 0 ${largeArcFlag} 1 ${outerEnd.x} ${outerEnd.y}
-    L ${innerEnd.x} ${innerEnd.y}
-    A ${rInner} ${rInner} 0 ${largeArcFlag} 0 ${innerStart.x} ${innerStart.y}
-    Z
-  `;
-}
 
 function textPoint(cx, cy, radius, angleDeg) {
   return polarToCartesian(cx, cy, radius, angleDeg);
@@ -323,29 +62,28 @@ function FlavorWheel({
 
   const currentWheel = wheelDataMap[activeWheel];
 
-  const cx = 450;
-  const cy = 450;
+const {
+  cx,
+  cy,
+  innerHole,
+  ring1Inner,
+  ring1Outer,
+  ring2Inner,
+  ring2Outer,
+  ring3Inner,
+  ring3Outer,
+  outerLabelRadius,
+  secondaryRing1Inner,
+  secondaryRing1Outer,
+  secondaryRing2Inner,
+  secondaryRing2Outer,
+  secondaryRing3Inner,
+  secondaryRing3Outer,
+  secondaryOuterLabelRadius,
+} = wheelConstants;
 
-  const innerHole = 90;
-  const ring1Inner = 90;
-  const ring1Outer = 170;
-  const ring2Inner = 170;
-  const ring2Outer = 280;
-  const ring3Inner = 280;
-  const ring3Outer = 300;
-  const outerLabelRadius = 315;
-
-  const secondaryRotationOffset = -45;
-  const secondaryStartAngle = -82 + secondaryRotationOffset;
-  const secondaryEndAngle = 83 + secondaryRotationOffset;
-
-  const secondaryRing1Inner = 90;
-  const secondaryRing1Outer = 180;
-  const secondaryRing2Inner = 184;
-  const secondaryRing2Outer = 248;
-  const secondaryRing3Inner = 252;
-  const secondaryRing3Outer = 305;
-  const secondaryOuterLabelRadius = 330;
+const secondaryStartAngle = -82 + wheelConstants.secondaryRotationOffset;
+const secondaryEndAngle = 83 + wheelConstants.secondaryRotationOffset;
 
   const secondaryRing1TextRadius =
     (secondaryRing1Inner + secondaryRing1Outer) / 2;
@@ -374,86 +112,17 @@ function FlavorWheel({
     []
   );
 
-  const totalLeaf = isSecondaryWheel
-    ? 0
-    : currentWheel.reduce(
-        (sum, top) =>
-          sum + top.children.reduce((s, mid) => s + mid.children.length, 0),
-        0
-      );
-
-  const anglePerLeaf = isSecondaryWheel ? 0 : 360 / totalLeaf;
-
-  let currentAngle = 0;
-  const ring1Segments = [];
-  const ring2Segments = [];
-  const ring3Segments = [];
-
-  if (!isSecondaryWheel) {
-    currentWheel.forEach((top) => {
-      const topLeafCount = top.children.reduce(
-        (sum, mid) => sum + mid.children.length,
-        0
-      );
-
-      const topSpan = topLeafCount * anglePerLeaf;
-      const topStart = currentAngle;
-      const topEnd = currentAngle + topSpan;
-
-      ring1Segments.push({
-        label: top.label,
-        color: top.color,
-        start: topStart,
-        end: topEnd,
-      });
-
-      let childAngle = topStart;
-
-      top.children.forEach((mid) => {
-        const midChildrenCount = mid.children.length;
-        const midSpan = midChildrenCount * anglePerLeaf;
-        const midStart = childAngle;
-        const midEnd = childAngle + midSpan;
-        const hasOuterBlock = !noOuterBlockLabels.has(mid.label);
-
-        ring2Segments.push({
-          label: mid.label,
-          color: mid.color,
-          start: midStart,
-          end: midEnd,
-          outerRadius: ring2Outer,
-          parentTop: top.label,
-          hasOuterBlock,
-        });
-
-        const leafSpan = midSpan / midChildrenCount;
-        let leafAngle = midStart;
-
-        mid.children.forEach((leaf) => {
-          const leafStart = leafAngle;
-          const leafEnd = leafAngle + leafSpan;
-
-          if (hasOuterBlock) {
-            ring3Segments.push({
-              id: `${top.label}-${mid.label}-${leaf}`,
-              label: leaf,
-              color: mid.color,
-              start: leafStart,
-              end: leafEnd,
-              parentTop: top.label,
-              parentMid: mid.label,
-            });
-          }
-
-          leafAngle += leafSpan;
-        });
-
-        childAngle += midSpan;
-      });
-
-      currentAngle += topSpan;
-    });
+const { ring1Segments, ring2Segments, ring3Segments } = useMemo(() => {
+  if (isSecondaryWheel) {
+    return {
+      ring1Segments: [],
+      ring2Segments: [],
+      ring3Segments: [],
+    };
   }
+
+return buildMainWheelSegments();
+}, [isSecondaryWheel, currentWheel, noOuterBlockLabels, ring2Outer]);
 
 const {
   secondaryTopSegments,

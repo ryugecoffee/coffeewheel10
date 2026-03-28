@@ -1,7 +1,6 @@
-import { memo, useEffect, useMemo, useState } from "react";
-import { pdf } from "@react-pdf/renderer";
-import FlavorNotePDF from "./FlavorNotePDF.jsx";
+import { memo, useEffect, useState } from "react";
 import FlavorWheel from "./FlavorWheel.jsx";
+
 
 const buttonStyle = {
   height: 30,
@@ -42,34 +41,9 @@ const SavedNoteCard = memo(function SavedNoteCard({
 }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-  const pdfDocument = useMemo(() => {
-    return <FlavorNotePDF note={item} />;
-  }, [item]);
-
   const handlePdfDownload = async () => {
-    if (isGeneratingPdf) return;
-
-    try {
-      setIsGeneratingPdf(true);
-
-      const blob = await pdf(pdfDocument).toBlob();
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `coffee-note-${item.id}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("PDF generation failed:", error);
-      alert("PDF generation failed.");
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
+  alert("PDF is temporarily disabled for debugging.");
+};
 
   const labelStyle = {
     fontSize: 12,
@@ -90,21 +64,6 @@ const SavedNoteCard = memo(function SavedNoteCard({
     fontWeight: 600,
     letterSpacing: "0.1px",
   };
-
-const getMainWheelNoteLabel = (item) => {
-  // 3周目がある場合 → それを表示
-  if (item.label && item.label !== item.parentTop && item.label !== item.parentMid) {
-    return item.label;
-  }
-
-  // 3周目なし → 2周目
-  if (item.parentMid) {
-    return item.parentMid;
-  }
-
-  // fallback
-  return item.parentTop;
-};
 
 const savedFlavorNotes =
   item.secondarySelections && item.secondarySelections.length > 0
