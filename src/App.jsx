@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
 import FlavorWheel from "./FlavorWheel";
 import CoffeeFlavorWheelPDF from "./CoffeeFlavorWheelPDF";
+import { buildMainWheelSegments } from "./wheelGeometry";
 
 const CURRENT_NOTE_KEY = "coffee-note-current";
 const SAVED_NOTES_KEY = "coffee-note-saved";
@@ -132,6 +133,14 @@ function loadCurrentNote() {
     cupProfileSelections: safeArray(raw?.cupProfileSelections),
   };
 }
+const ring1LabelSet = new Set(
+  buildMainWheelSegments().ring1Segments.map((seg) => seg.label)
+);
+
+const getVisibleFlavorSelections = (selections = []) => {
+  if (!Array.isArray(selections)) return [];
+  return [...new Set(selections.filter((label) => label && !ring1LabelSet.has(label)))];
+};
 
 function loadSavedNotes() {
   const raw = loadJson(SAVED_NOTES_KEY, []);
@@ -185,6 +194,10 @@ function getVisibleMainSelections(mainSelections) {
   return safeArray(mainSelections).filter(
     (item) => !MAIN_WHEEL_TOP_LABELS.includes(String(item).trim().toUpperCase())
   );
+}
+
+function getVisibleOuterSelections(secondarySelections) {
+  return safeArray(secondarySelections).filter(Boolean);
 }
 
 function App() {
@@ -923,7 +936,7 @@ function App() {
               }}
             >
               {filteredSavedNotes.map((note, index) => {
-                const visibleMainSelections = getVisibleMainSelections(note.mainSelections);
+                const visibleOuterSelections = getVisibleOuterSelections(note.secondarySelections);
 
                 return (
                   <div
@@ -1016,43 +1029,18 @@ function App() {
                       </div>
                     ) : null}
 
-                    {visibleMainSelections.length > 0 ? (
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={tagWrapStyle}>
-                          {visibleMainSelections.map((item, i) => (
-                            <span key={`${item}-${i}`} style={tagStyle}>
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
+                   {visibleOuterSelections.length > 0 ? (
+  <div style={{ marginBottom: 10 }}>
+    <div style={tagWrapStyle}>
+      {visibleOuterSelections.map((item, i) => (
+        <span key={`${item}-${i}`} style={tagStyle}>
+          {item}
+        </span>
+      ))}
+    </div>
+  </div>
+) : null}
 
-                    {note.secondarySelections?.length ? (
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={sectionLabelStyle}>Secondary Selections</div>
-                        <div style={tagWrapStyle}>
-                          {note.secondarySelections.map((item, i) => (
-                            <span key={`${item}-${i}`} style={tagStyle}>
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {note.cupProfileSelections?.length ? (
-                      <div>
-                        <div style={sectionLabelStyle}>Cup Profile</div>
-                        <div style={tagWrapStyle}>
-                          {note.cupProfileSelections.map((item, i) => (
-                            <span key={`${item}-${i}`} style={tagStyle}>
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
                   </div>
                 );
               })}

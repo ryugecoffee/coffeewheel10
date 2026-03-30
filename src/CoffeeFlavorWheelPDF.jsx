@@ -15,8 +15,8 @@ import {
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 34,
-    paddingBottom: 26,
+    paddingTop: 28,
+    paddingBottom: 24,
     paddingHorizontal: 28,
     backgroundColor: "#ffffff",
     color: "#111111",
@@ -25,26 +25,66 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
-header: {
-  marginBottom: 8,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 10,
+  },
+
+  headerCountry: {
+    fontSize: 24,
+    fontWeight: 700,
+    color: "#1f1a17",
+    letterSpacing: 0.3,
+  },
+
+  headerFarm: {
+    fontSize: 12,
+    color: "#6f675f",
+    marginLeft: 10,
+    letterSpacing: 0.2,
+  },
+
+  infoSection: {
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#dddddd",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+
+infoRow: {
+  flexDirection: "row",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  marginBottom: 10,
 },
 
-headerCountry: {
-  fontSize: 24,
-  fontWeight: 700,
-  color: "#1f1a17",
-  marginBottom: 2,
-  letterSpacing: 0.4,
-},
+  infoItem: {
+    flex: 1,
+    paddingRight: 8,
+  },
 
-headerFarm: {
-  fontSize: 12,
-  color: "#6f675f",
-  letterSpacing: 0.3,
+  memoItem: {
+    flex: 1.4,
+    paddingRight: 0,
+  },
+
+  infoLabel: {
+    fontSize: 8,
+    color: "#777777",
+    marginBottom: 3,
+  },
+
+ infoValue: {
+  fontSize: 10,
+  color: "#111111",
+  lineHeight: 1.45,
 },
 
   section: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
 
   sectionTitle: {
@@ -52,53 +92,18 @@ headerFarm: {
     fontWeight: "700",
     letterSpacing: 0.8,
     marginBottom: 8,
-    color: "#444444",
+    color: "#222222",
   },
 
-  infoSection: {
-    marginBottom: 12,
+  chartBlock: {
     borderWidth: 1,
-    borderColor: "#dddddd",
-    borderRadius: 10,
-    padding: 10,
+    borderColor: "#d8d2ca",
+    borderRadius: 14,
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingHorizontal: 8,
+    backgroundColor: "#f6f3ef",
   },
-
-  infoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -6,
-  },
-
-  infoItem: {
-    width: "50%",
-    paddingHorizontal: 6,
-    marginBottom: 10,
-  },
-
-  memoItem: {
-    width: "100%",
-    paddingHorizontal: 6,
-    marginTop: 2,
-  },
-
-  infoLabel: {
-    fontSize: 9,
-    color: "#777777",
-    marginBottom: 3,
-  },
-
-  infoValue: {
-    fontSize: 11,
-    color: "#111111",
-  },
-
-chartBlock: {
-  borderWidth: 1,
-  borderColor: "#d8d2ca",
-  borderRadius: 14,
-  padding: 8,
-  backgroundColor: "#e7e3dd",
-},
 
   chartColumn: {
     flexDirection: "column",
@@ -111,22 +116,24 @@ chartBlock: {
   },
 
   wordGrid: {
-    marginTop: 10,
+    marginTop: 8,
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "center",
+    justifyContent: "flex-start",
+    width: "100%",
   },
 
   wordChip: {
-    fontSize: 9,
+    fontSize: 8,
     borderWidth: 1,
-    borderColor: "#d8d8d8",
+    borderColor: "#cfc7bd",
     borderRadius: 999,
     paddingTop: 4,
     paddingBottom: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     marginRight: 6,
     marginBottom: 6,
+    color: "#222222",
   },
 
   emptyText: {
@@ -143,10 +150,18 @@ chartBlock: {
     alignItems: "center",
   },
 
-  footerLine: {
+  footerMain: {
     fontSize: 10,
-    color: "#111111",
-    textAlign: "center",
+    color: "#777777",
+    letterSpacing: 0.8,
+    fontStyle: "italic",
+  },
+
+  footerSub: {
+    fontSize: 7,
+    color: "#b7b7b7",
+    marginTop: 4,
+    letterSpacing: 1.1,
   },
 });
 
@@ -154,12 +169,11 @@ const safeArray = (value) => {
   if (!Array.isArray(value)) return [];
   return value.filter(Boolean);
 };
+
 const uniqueArray = (arr) => [...new Set(arr.filter(Boolean))];
 
 function FlavorWheelChart({ selectedFlavors = [] }) {
-  const flavorList = safeArray(selectedFlavors);
-  const selectedSet = new Set(flavorList);
-
+  const selectedSet = new Set(safeArray(selectedFlavors));
   const { ring1Segments, ring2Segments, ring3Segments } = buildMainWheelSegments();
 
   const cx = 170;
@@ -172,20 +186,44 @@ function FlavorWheelChart({ selectedFlavors = [] }) {
   const ring3Inner = 136;
   const ring3Outer = 154;
 
+  const hasSelections = selectedSet.size > 0;
+
+  const isRing3Active = (seg) => selectedSet.has(seg.label);
+
+  const isRing2Active = (seg) => {
+    if (selectedSet.has(seg.label)) return true;
+    return ring3Segments.some(
+      (leaf) => leaf.parentMid === seg.label && selectedSet.has(leaf.label)
+    );
+  };
+
+  const isRing1Active = (seg) => {
+    if (selectedSet.has(seg.label)) return true;
+
+    const hasSelectedMid = ring2Segments.some(
+      (mid) => mid.parentTop === seg.label && selectedSet.has(mid.label)
+    );
+    if (hasSelectedMid) return true;
+
+    return ring3Segments.some(
+      (leaf) => leaf.parentTop === seg.label && selectedSet.has(leaf.label)
+    );
+  };
+
   return (
     <Svg width={340} height={340}>
       {ring3Segments.map((seg, i) => {
-        const isSelected = selectedSet.has(seg.label);
         const d = arcPath(cx, cy, ring3Inner, ring3Outer, seg.start, seg.end);
+        const active = isRing3Active(seg);
 
         return (
           <Path
             key={`r3-${i}`}
             d={d}
             fill={seg.color}
-            stroke="#e7e3dd"
+            stroke="#f6f3ef"
             strokeWidth={2.2}
-            opacity={selectedSet.size === 0 ? 0.82 : isSelected ? 1 : 0.12}
+            opacity={!hasSelections ? 0.82 : active ? 1 : 0.08}
           />
         );
       })}
@@ -193,70 +231,41 @@ function FlavorWheelChart({ selectedFlavors = [] }) {
       {ring2Segments.map((seg, i) => {
         const outerRadius = seg.hasOuterBlock ? ring2Outer : ring3Outer;
         const d = arcPath(cx, cy, ring2Inner, outerRadius, seg.start, seg.end);
-
-        const isActiveParent = seg.hasOuterBlock
-          ? ring3Segments.some(
-              (leaf) => leaf.parentMid === seg.label && selectedSet.has(leaf.label)
-            )
-          : selectedSet.has(seg.label);
+        const active = isRing2Active(seg);
 
         return (
           <Path
             key={`r2-${i}`}
             d={d}
             fill={seg.color}
-            stroke="#e7e3dd"
+            stroke="#f6f3ef"
             strokeWidth={2.6}
-            opacity={selectedSet.size === 0 ? 0.88 : isActiveParent ? 0.96 : 0.14}
+            opacity={!hasSelections ? 0.88 : active ? 0.98 : 0.1}
           />
         );
       })}
 
       {ring1Segments.map((seg, i) => {
         const d = arcPath(cx, cy, ring1Inner, ring1Outer, seg.start, seg.end);
-
-        const isActiveParent =
-          ring3Segments.some(
-            (leaf) => leaf.parentTop === seg.label && selectedSet.has(leaf.label)
-          ) ||
-          ring2Segments.some(
-            (mid) =>
-              mid.parentTop === seg.label &&
-              !mid.hasOuterBlock &&
-              selectedSet.has(mid.label)
-          );
+        const active = isRing1Active(seg);
 
         return (
           <Path
             key={`r1-${i}`}
             d={d}
-            fill={isActiveParent || selectedSet.size === 0 ? seg.color : "#ece7e0"}
-            stroke="#e7e3dd"
+            fill={seg.color}
+            stroke="#f6f3ef"
             strokeWidth={2.6}
-            opacity={selectedSet.size === 0 ? 0.95 : 1}
+            opacity={!hasSelections ? 0.96 : active ? 1 : 0.18}
           />
         );
       })}
 
       <Path
         d={arcPath(cx, cy, 0, ring1Inner - 2, 0, 359.99)}
-        fill="#f7f4ef"
+        fill="#ffffff"
       />
     </Svg>
-  );
-}
-
-function SecondaryWheelChart({ selectedCupProfile = [] }) {
-  const cupList = safeArray(selectedCupProfile);
-
-  return (
-    <View style={{ marginTop: 10 }}>
-      {cupList.length > 0 ? (
-        <Text>{cupList.join(", ")}</Text>
-      ) : (
-        <Text style={{ color: "#999" }}>No cup profile selected</Text>
-      )}
-    </View>
   );
 }
 
@@ -266,96 +275,95 @@ export default function CoffeeFlavorWheelPDF({
   roastDate = "",
   variety = "",
   dripper = "",
-  process = "",
   roaster = "",
   memo = "",
   flavors = [],
   cupProfile = [],
+  mainSelections = [],
+  secondarySelections = [],
+  cupProfileSelections = [],
 }) {
-  const flavorList = uniqueArray(safeArray(flavors));
-  const cupProfileList = uniqueArray(safeArray(cupProfile));
+  const { ring1Segments } = buildMainWheelSegments();
+  const ring1LabelSet = new Set(ring1Segments.map((seg) => seg.label));
+
+  const flavorListRaw = uniqueArray([
+    ...safeArray(mainSelections),
+    ...safeArray(secondarySelections),
+    ...safeArray(flavors),
+  ]);
+
+  const cupProfileList = uniqueArray([
+    ...safeArray(cupProfileSelections),
+    ...safeArray(cupProfile),
+  ]);
+
+  const flavorWordList = flavorListRaw.filter(
+    (label) => !ring1LabelSet.has(label)
+  );
 
   return (
-  <Document>
-    <Page size="A4" style={styles.page}>
-<View style={{ flexDirection: "row", alignItems: "center" }}>
-  <Text style={styles.headerCountry}>{country || "-"}</Text>
-  <Text style={{ marginLeft: 8, ...styles.headerFarm }}>
-    {farm || "-"}
-  </Text>
-</View>
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerCountry}>{country || "-"}</Text>
+          <Text style={styles.headerFarm}>{farm || "-"}</Text>
+        </View>
+
 <View style={styles.infoSection}>
-
-  {/* Country / Farm 横並び */}
-
-  {/* ラベル行 */}
-  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-    <View style={{ width: "23%", alignItems: "center" }}>
+  <View style={styles.infoRow}>
+    <View style={styles.infoItem}>
       <Text style={styles.infoLabel}>Variety</Text>
-    </View>
-    <View style={{ width: "23%", alignItems: "center" }}>
-      <Text style={styles.infoLabel}>Roast Date</Text>
-    </View>
-    <View style={{ width: "23%", alignItems: "center" }}>
-      <Text style={styles.infoLabel}>Dripper</Text>
-    </View>
-    <View style={{ width: "23%", alignItems: "center" }}>
-      <Text style={styles.infoLabel}>Roaster</Text>
-    </View>
-  </View>
-
-  {/* 値行 */}
-  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-    <View style={{ width: "23%", alignItems: "center" }}>
       <Text style={styles.infoValue}>{variety || "-"}</Text>
     </View>
-    <View style={{ width: "23%", alignItems: "center" }}>
+
+    <View style={styles.infoItem}>
+      <Text style={styles.infoLabel}>Roast Date</Text>
       <Text style={styles.infoValue}>{roastDate || "-"}</Text>
     </View>
-    <View style={{ width: "23%", alignItems: "center" }}>
+
+    <View style={styles.infoItem}>
+      <Text style={styles.infoLabel}>Dripper</Text>
       <Text style={styles.infoValue}>{dripper || "-"}</Text>
     </View>
-    <View style={{ width: "23%", alignItems: "center" }}>
+
+    <View style={styles.infoItem}>
+      <Text style={styles.infoLabel}>Roaster</Text>
       <Text style={styles.infoValue}>{roaster || "-"}</Text>
     </View>
   </View>
 
-  {/* Memo */}
-  <View style={{ alignItems: "center", marginTop: 6 }}>
+  <View>
     <Text style={styles.infoLabel}>Memo</Text>
-    <Text style={{ textAlign: "center" }}>{memo || "-"}</Text>
+    <Text style={styles.infoValue}>{memo || "-"}</Text>
   </View>
-
 </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>FLAVOR</Text>
-        <View style={styles.chartBlock}>
-          <View style={styles.chartColumn}>
-            <View style={styles.wheelWrap}>
-              <FlavorWheelChart selectedFlavors={flavorList} />
-            </View>
-
-            {flavorList.length > 0 ? (
-              <View style={styles.wordGrid}>
-                {flavorList.map((item, index) => (
-                  <Text key={`flavor-word-${index}`} style={styles.wordChip}>
-                    {item}
-                  </Text>
-                ))}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>FLAVOR</Text>
+          <View style={styles.chartBlock}>
+            <View style={styles.chartColumn}>
+              <View style={styles.wheelWrap}>
+                <FlavorWheelChart selectedFlavors={flavorListRaw} />
               </View>
-            ) : (
-              <Text style={styles.emptyText}>No flavor selected</Text>
-            )}
+
+              {flavorWordList.length > 0 ? (
+                <View style={styles.wordGrid}>
+                  {flavorWordList.map((item, index) => (
+                    <Text key={`flavor-word-${index}`} style={styles.wordChip}>
+                      {item}
+                    </Text>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyText}>No flavor selected</Text>
+              )}
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>CUP PROFILE</Text>
-        <View style={styles.chartBlock}>
-          <View style={styles.chartColumn}>
-
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>CUP PROFILE</Text>
+          <View style={styles.chartBlock}>
             {cupProfileList.length > 0 ? (
               <View style={styles.wordGrid}>
                 {cupProfileList.map((item, index) => (
@@ -369,34 +377,12 @@ export default function CoffeeFlavorWheelPDF({
             )}
           </View>
         </View>
-      </View>
 
-      <View style={styles.footer}>
-        <View style={{ alignItems: "center", marginTop: 14 }}>
-  <Text
-    style={{
-      fontSize: 10,
-      color: "#777",
-      letterSpacing: 0.8,
-      fontStyle: "italic",
-    }}
-  >
-    Another Day, Another Coffee
-  </Text>
-
-  <Text
-    style={{
-      fontSize: 7,
-      color: "#bbb",
-      marginTop: 4,
-      letterSpacing: 1.2,
-    }}
-  >
-    Ryuge Coffee
-  </Text>
-</View>
-      </View>
-    </Page>
-  </Document>
+        <View style={styles.footer}>
+          <Text style={styles.footerMain}>Another Day, Another Coffee</Text>
+          <Text style={styles.footerSub}>Ryuge Coffee</Text>
+        </View>
+      </Page>
+    </Document>
   );
 }
