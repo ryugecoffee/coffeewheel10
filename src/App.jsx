@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import FlavorWheel from "./FlavorWheel.jsx";
 import CoffeeFlavorWheelPDF from "./CoffeeFlavorWheelPDF.jsx";
 import { pdf } from "@react-pdf/renderer";
@@ -46,17 +46,17 @@ const getViewportWidth = () => {
 };
 
 const getWheelScale = (width) => {
-  if (width < 430) return 0.56;   // iPhone系
-  if (width < 768) return 0.68;   // 大きめスマホ
-  if (width < 1100) return 0.82;  // iPad系
+  if (width < 430) return 0.78;   // iPhone
+  if (width < 768) return 0.88;   // 大きめスマホ
+  if (width < 1100) return 0.98;  // iPad
   return 1;
 };
 
 const getWheelStageHeight = (width) => {
-  if (width < 430) return 430;
-  if (width < 768) return 520;
-  if (width < 1100) return 620;
-  return 760;
+  if (width < 430) return 590;
+  if (width < 768) return 670;
+  if (width < 1100) return 760;
+  return 780;
 };
 
 const SavedNoteCard = memo(function SavedNoteCard({
@@ -272,6 +272,8 @@ function App() {
   const [wheelResetKey, setWheelResetKey] = useState(0);
   const [windowWidth, setWindowWidth] = useState(getViewportWidth());
 
+  const wheelSectionRef = useRef(null);
+
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(getViewportWidth());
@@ -288,6 +290,15 @@ function App() {
 
   const changeLang = (newLang) => {
     setLang(newLang);
+  };
+
+  const scrollToWheel = () => {
+    if (wheelSectionRef.current) {
+      wheelSectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
   const resetForm = () => {
@@ -407,6 +418,7 @@ function App() {
     localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
 
     resetForm();
+    scrollToWheel();
   };
 
   const handleDelete = (id) => {
@@ -460,16 +472,35 @@ function App() {
     setSecondarySelections([...(item.secondarySelections || []).filter(Boolean)]);
 
     setWheelResetKey((prev) => prev + 1);
+
+    setTimeout(() => {
+      scrollToWheel();
+    }, 80);
   };
 
   const inputStyle = {
     width: "100%",
-    padding: 10,
+    minWidth: 0,
+    height: 42,
+    padding: "10px 12px",
     borderRadius: 10,
     border: "1px solid #d8cec1",
     boxSizing: "border-box",
     fontSize: 14,
     background: "#fff",
+    color: "#2f2a26",
+    WebkitTextFillColor: "#2f2a26",
+    appearance: "none",
+    WebkitAppearance: "none",
+  };
+
+  const textareaStyle = {
+    ...inputStyle,
+    minHeight: 96,
+    height: "auto",
+    resize: "vertical",
+    fontFamily: "inherit",
+    lineHeight: 1.5,
   };
 
   const infoLabelStyle = {
@@ -502,6 +533,7 @@ function App() {
         }}
       >
         <div
+          ref={wheelSectionRef}
           style={{
             flex: isMobile || isTablet ? "1 1 auto" : "1 1 620px",
             width: "100%",
@@ -635,9 +667,10 @@ function App() {
                 display: "grid",
                 gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
                 gap: 12,
+                alignItems: "stretch",
               }}
             >
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label style={infoLabelStyle}>Country</label>
                 <input
                   type="text"
@@ -647,7 +680,7 @@ function App() {
                 />
               </div>
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label style={infoLabelStyle}>Farm</label>
                 <input
                   type="text"
@@ -657,7 +690,7 @@ function App() {
                 />
               </div>
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label style={infoLabelStyle}>Roast Date</label>
                 <input
                   type="date"
@@ -667,7 +700,7 @@ function App() {
                 />
               </div>
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label style={infoLabelStyle}>Variety</label>
                 <input
                   type="text"
@@ -677,7 +710,7 @@ function App() {
                 />
               </div>
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label style={infoLabelStyle}>Dripper</label>
                 <input
                   type="text"
@@ -687,7 +720,7 @@ function App() {
                 />
               </div>
 
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <label style={infoLabelStyle}>Roaster</label>
                 <input
                   type="text"
@@ -697,17 +730,12 @@ function App() {
                 />
               </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ gridColumn: "1 / -1", minWidth: 0 }}>
                 <label style={infoLabelStyle}>Memo</label>
                 <textarea
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    minHeight: 96,
-                    resize: "vertical",
-                    fontFamily: "inherit",
-                  }}
+                  style={textareaStyle}
                 />
               </div>
             </div>
