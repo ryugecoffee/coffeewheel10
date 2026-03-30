@@ -4,20 +4,25 @@ import CoffeeFlavorWheelPDF from "./CoffeeFlavorWheelPDF.jsx";
 import { pdf } from "@react-pdf/renderer";
 
 const buttonStyle = {
-  height: 30,
-  padding: "0 12px",
-  borderRadius: 8,
+  height: 36,
+  padding: "0 14px",
+  borderRadius: 10,
   border: "1px solid #d8cec1",
   background: "#f3efe8",
   color: "#5a5148",
   fontSize: 13,
   cursor: "pointer",
   boxSizing: "border-box",
+  whiteSpace: "nowrap",
 };
 
 const languageButtonStyle = {
   ...buttonStyle,
   background: "#fff",
+  height: 28,
+  padding: "0 10px",
+  fontSize: 11,
+  borderRadius: 999,
 };
 
 const sectionTitleStyle = {
@@ -35,6 +40,25 @@ const isSameArray = (a = [], b = []) => {
   return a.every((item, index) => item === b[index]);
 };
 
+const getViewportWidth = () => {
+  if (typeof window === "undefined") return 1440;
+  return window.innerWidth;
+};
+
+const getWheelScale = (width) => {
+  if (width < 430) return 0.56;   // iPhone系
+  if (width < 768) return 0.68;   // 大きめスマホ
+  if (width < 1100) return 0.82;  // iPad系
+  return 1;
+};
+
+const getWheelStageHeight = (width) => {
+  if (width < 430) return 430;
+  if (width < 768) return 520;
+  if (width < 1100) return 620;
+  return 760;
+};
+
 const SavedNoteCard = memo(function SavedNoteCard({
   item,
   handleEdit,
@@ -42,62 +66,61 @@ const SavedNoteCard = memo(function SavedNoteCard({
 }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-const handlePdfDownload = async () => {
-  try {
-    setIsGeneratingPdf(true);
+  const handlePdfDownload = async () => {
+    try {
+      setIsGeneratingPdf(true);
 
-    const savedFlavorNotes =
-      item.secondarySelections && item.secondarySelections.length > 0
-        ? item.secondarySelections
-        : item.mainSelections && item.mainSelections.length > 0
-        ? item.mainSelections
-        : [];
+      const savedFlavorNotes =
+        item.secondarySelections && item.secondarySelections.length > 0
+          ? item.secondarySelections
+          : item.mainSelections && item.mainSelections.length > 0
+          ? item.mainSelections
+          : [];
 
-    const savedCupProfile =
-      item.cupProfileSelections && item.cupProfileSelections.length > 0
-        ? item.cupProfileSelections
-        : item.cupProfile && item.cupProfile.length > 0
-        ? item.cupProfile
-        : [];
+      const savedCupProfile =
+        item.cupProfileSelections && item.cupProfileSelections.length > 0
+          ? item.cupProfileSelections
+          : item.cupProfile && item.cupProfile.length > 0
+          ? item.cupProfile
+          : [];
 
-    const blob = await pdf(
- <CoffeeFlavorWheelPDF
-  country={item.country || ""}
-  farm={item.farm || ""}
-  roastDate={item.roastDate || ""}
-  variety={item.variety || ""}
-  dripper={item.dripper || ""}
-  process={item.process || ""}
-  roaster={item.roaster || ""}
-  memo={item.memo || ""}
-  flavors={savedFlavorNotes}
-  cupProfile={savedCupProfile}
-/>
-    ).toBlob();
+      const blob = await pdf(
+        <CoffeeFlavorWheelPDF
+          country={item.country || ""}
+          farm={item.farm || ""}
+          roastDate={item.roastDate || ""}
+          variety={item.variety || ""}
+          dripper={item.dripper || ""}
+          roaster={item.roaster || ""}
+          memo={item.memo || ""}
+          flavors={savedFlavorNotes}
+          cupProfile={savedCupProfile}
+        />
+      ).toBlob();
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    const today = new Date().toISOString().split("T")[0];
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const today = new Date().toISOString().split("T")[0];
 
-const safeName = `${item.country || "coffee"}-${item.farm || "farm"}-${today}`
-  .replace(/\s+/g, "_")
-  .replace(/[^\w\-]/g, "");
+      const safeName = `${item.country || "coffee"}-${item.farm || "farm"}-${today}`
+        .replace(/\s+/g, "_")
+        .replace(/[^\w\-]/g, "");
 
-link.download = `${safeName}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-} catch (error) {
-  console.error("PDF generation failed:", error);
-  alert(
-    `PDF generation failed:\n${error?.message || error?.toString() || "Unknown error"}`
-  );
-} finally {
-    setIsGeneratingPdf(false);
-  }
-};
+      link.download = `${safeName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert(
+        `PDF generation failed:\n${error?.message || error?.toString() || "Unknown error"}`
+      );
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   const labelStyle = {
     fontSize: 12,
@@ -110,6 +133,7 @@ link.download = `${safeName}.pdf`;
     fontSize: 13,
     color: "#2f2a26",
     fontWeight: 500,
+    wordBreak: "break-word",
   };
 
   const flavorStyle = {
@@ -117,14 +141,15 @@ link.download = `${safeName}.pdf`;
     color: "#2a2521",
     fontWeight: 600,
     letterSpacing: "0.1px",
+    wordBreak: "break-word",
   };
 
-const savedFlavorNotes =
-  item.secondarySelections && item.secondarySelections.length > 0
-    ? item.secondarySelections
-    : item.mainSelections && item.mainSelections.length > 0
-    ? item.mainSelections
-    : [];
+  const savedFlavorNotes =
+    item.secondarySelections && item.secondarySelections.length > 0
+      ? item.secondarySelections
+      : item.mainSelections && item.mainSelections.length > 0
+      ? item.mainSelections
+      : [];
 
   const savedCupProfile =
     item.cupProfileSelections && item.cupProfileSelections.length > 0
@@ -139,12 +164,13 @@ const savedFlavorNotes =
         border: "1px solid #e5ded3",
         borderRadius: 12,
         padding: 14,
+        boxSizing: "border-box",
       }}
     >
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
           gap: 10,
           marginBottom: 12,
           fontFamily: "system-ui, -apple-system, sans-serif",
@@ -176,8 +202,8 @@ const savedFlavorNotes =
         </div>
 
         <div>
-          <span style={labelStyle}>Process:</span>{" "}
-          <span style={valueStyle}>{item.process || "-"}</span>
+          <span style={labelStyle}>Roaster:</span>{" "}
+          <span style={valueStyle}>{item.roaster || "-"}</span>
         </div>
 
         <div style={{ gridColumn: "1 / -1", marginTop: 2 }}>
@@ -193,9 +219,21 @@ const savedFlavorNotes =
             {savedCupProfile.length > 0 ? savedCupProfile.join(", ") : "-"}
           </span>
         </div>
+
+        <div style={{ gridColumn: "1 / -1", marginTop: 2 }}>
+          <span style={labelStyle}>Memo:</span>{" "}
+          <span style={valueStyle}>{item.memo || "-"}</span>
+        </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+          marginTop: 4,
+        }}
+      >
         <button onClick={() => handleEdit(item)} style={buttonStyle}>
           Edit
         </button>
@@ -218,36 +256,49 @@ const savedFlavorNotes =
 });
 
 function App() {
-const [country, setCountry] = useState("");
-const [farm, setFarm] = useState("");
-const [roastDate, setRoastDate] = useState("");
-const [variety, setVariety] = useState("");
-const [dripper, setDripper] = useState("");
-const [process, setProcess] = useState("");
-const [roaster, setRoaster] = useState("");
-const [memo, setMemo] = useState("");
-const [lang, setLang] = useState("en");
+  const [country, setCountry] = useState("");
+  const [farm, setFarm] = useState("");
+  const [roastDate, setRoastDate] = useState("");
+  const [variety, setVariety] = useState("");
+  const [dripper, setDripper] = useState("");
+  const [roaster, setRoaster] = useState("");
+  const [memo, setMemo] = useState("");
+  const [lang, setLang] = useState("en");
 
   const [cupProfileSelections, setCupProfileSelections] = useState([]);
   const [mainSelections, setMainSelections] = useState([]);
   const [secondarySelections, setSecondarySelections] = useState([]);
   const [savedNotes, setSavedNotes] = useState([]);
   const [wheelResetKey, setWheelResetKey] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(getViewportWidth());
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(getViewportWidth());
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1100;
+  const wheelScale = getWheelScale(windowWidth);
+  const wheelStageHeight = getWheelStageHeight(windowWidth);
 
   const changeLang = (newLang) => {
     setLang(newLang);
   };
 
-const resetForm = () => {
-  setCountry("");
-  setFarm("");
-  setRoastDate("");
-  setVariety("");
-  setDripper("");
-  setProcess("");
-  setRoaster("");
-  setMemo("");
-  setLang("en");
+  const resetForm = () => {
+    setCountry("");
+    setFarm("");
+    setRoastDate("");
+    setVariety("");
+    setDripper("");
+    setRoaster("");
+    setMemo("");
+    setLang("en");
 
     setCupProfileSelections([]);
     setMainSelections([]);
@@ -262,15 +313,14 @@ const resetForm = () => {
     if (savedCurrent) {
       const data = JSON.parse(savedCurrent);
 
- setCountry(data.country || "");
-setFarm(data.farm || "");
-setRoastDate(data.roastDate || "");
-setVariety(data.variety || "");
-setDripper(data.dripper || "");
-setProcess(data.process || "");
-setRoaster(data.roaster || "");
-setMemo(data.memo || "");
-setLang(data.lang || "en");
+      setCountry(data.country || "");
+      setFarm(data.farm || "");
+      setRoastDate(data.roastDate || "");
+      setVariety(data.variety || "");
+      setDripper(data.dripper || "");
+      setRoaster(data.roaster || "");
+      setMemo(data.memo || "");
+      setLang(data.lang || "en");
 
       setCupProfileSelections(
         data.cupProfileSelections || data.cupProfile || []
@@ -286,75 +336,78 @@ setLang(data.lang || "en");
   }, []);
 
   useEffect(() => {
-const currentNote = {
-  country,
-  farm,
-  roastDate,
-  variety,
-  dripper,
-  process,
-  roaster,
-  memo,
-  lang,
-  cupProfileSelections,
-  mainSelections,
-  secondarySelections,
-};
+    const currentNote = {
+      country,
+      farm,
+      roastDate,
+      variety,
+      dripper,
+      roaster,
+      memo,
+      lang,
+      cupProfileSelections,
+      mainSelections,
+      secondarySelections,
+    };
 
     localStorage.setItem("coffee-note-current", JSON.stringify(currentNote));
-}, [
-  country,
-  farm,
-  roastDate,
-  variety,
-  dripper,
-  process,
-  roaster,
-  memo,
-  lang,
-  cupProfileSelections,
-  mainSelections,
-  secondarySelections,
-]);
-
-const handleSave = () => {
-  const isAllEmpty =
-    !country.trim() &&
-    !farm.trim() &&
-    !roastDate.trim() &&
-    !variety.trim() &&
-    !dripper.trim() &&
-    !process.trim() &&
-    !roaster.trim() &&
-    !memo.trim() &&
-    cupProfileSelections.length === 0 &&
-    mainSelections.length === 0 &&
-    secondarySelections.length === 0;
-
-  if (isAllEmpty) return;
-
-  const newNote = {
-    id: Date.now(),
+  }, [
     country,
     farm,
     roastDate,
     variety,
     dripper,
-    process,
     roaster,
     memo,
     lang,
-    cupProfileSelections: [...cupProfileSelections],
-    mainSelections: [...mainSelections],
-    secondarySelections: [...secondarySelections],
+    cupProfileSelections,
+    mainSelections,
+    secondarySelections,
+  ]);
+
+  const handleResetWheel = () => {
+    setCupProfileSelections([]);
+    setMainSelections([]);
+    setSecondarySelections([]);
+    setWheelResetKey((prev) => prev + 1);
   };
 
-  const updated = [newNote, ...savedNotes];
-  setSavedNotes(updated);
-  localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
+  const handleSave = () => {
+    const isAllEmpty =
+      !country.trim() &&
+      !farm.trim() &&
+      !roastDate.trim() &&
+      !variety.trim() &&
+      !dripper.trim() &&
+      !roaster.trim() &&
+      !memo.trim() &&
+      cupProfileSelections.length === 0 &&
+      mainSelections.length === 0 &&
+      secondarySelections.length === 0;
 
-  resetForm();
-};
+    if (isAllEmpty) return;
+
+    const newNote = {
+      id: Date.now(),
+      country,
+      farm,
+      roastDate,
+      variety,
+      dripper,
+      roaster,
+      memo,
+      lang,
+      cupProfileSelections: [...cupProfileSelections],
+      mainSelections: [...mainSelections],
+      secondarySelections: [...secondarySelections],
+    };
+
+    const updated = [newNote, ...savedNotes];
+    setSavedNotes(updated);
+    localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
+
+    resetForm();
+  };
 
   const handleDelete = (id) => {
     const updated = savedNotes.filter((item) => item.id !== id);
@@ -390,25 +443,24 @@ const handleSave = () => {
     }
   };
 
-const handleEdit = (item) => {
-  setCountry(item.country || "");
-  setFarm(item.farm || "");
-  setRoastDate(item.roastDate || "");
-  setVariety(item.variety || "");
-  setDripper(item.dripper || "");
-  setProcess(item.process || "");
-  setRoaster(item.roaster || "");
-  setMemo(item.memo || "");
-  setLang(item.lang || "en");
+  const handleEdit = (item) => {
+    setCountry(item.country || "");
+    setFarm(item.farm || "");
+    setRoastDate(item.roastDate || "");
+    setVariety(item.variety || "");
+    setDripper(item.dripper || "");
+    setRoaster(item.roaster || "");
+    setMemo(item.memo || "");
+    setLang(item.lang || "en");
 
-  setCupProfileSelections([
-    ...((item.cupProfileSelections || item.cupProfile || []).filter(Boolean)),
-  ]);
-  setMainSelections([...(item.mainSelections || []).filter(Boolean)]);
-  setSecondarySelections([...(item.secondarySelections || []).filter(Boolean)]);
+    setCupProfileSelections([
+      ...((item.cupProfileSelections || item.cupProfile || []).filter(Boolean)),
+    ]);
+    setMainSelections([...(item.mainSelections || []).filter(Boolean)]);
+    setSecondarySelections([...(item.secondarySelections || []).filter(Boolean)]);
 
-  setWheelResetKey((prev) => prev + 1);
-};
+    setWheelResetKey((prev) => prev + 1);
+  };
 
   const inputStyle = {
     width: "100%",
@@ -434,7 +486,7 @@ const handleEdit = (item) => {
       style={{
         minHeight: "100vh",
         background: "#f6f1ea",
-        padding: 24,
+        padding: isMobile ? 12 : 24,
         boxSizing: "border-box",
       }}
     >
@@ -443,18 +495,20 @@ const handleEdit = (item) => {
           maxWidth: 1400,
           margin: "0 auto",
           display: "flex",
-          gap: 24,
-          alignItems: "flex-start",
-          flexWrap: "wrap",
+          flexDirection: isMobile || isTablet ? "column" : "row",
+          gap: isMobile ? 16 : 24,
+          alignItems: "stretch",
+          flexWrap: "nowrap",
         }}
       >
         <div
           style={{
-            flex: "1 1 620px",
-            minWidth: 320,
+            flex: isMobile || isTablet ? "1 1 auto" : "1 1 620px",
+            width: "100%",
+            minWidth: 0,
             background: "#fff",
             borderRadius: 16,
-            padding: 20,
+            padding: isMobile ? 12 : 20,
             border: "1px solid #e5ded3",
             boxSizing: "border-box",
           }}
@@ -463,7 +517,7 @@ const handleEdit = (item) => {
             style={{
               marginTop: 0,
               marginBottom: 16,
-              fontSize: 22,
+              fontSize: isMobile ? 20 : 22,
               color: "#3d342b",
             }}
           >
@@ -473,111 +527,113 @@ const handleEdit = (item) => {
           <div
             style={{
               width: "100%",
+              minHeight: wheelStageHeight,
               display: "flex",
               justifyContent: "center",
-              alignItems: "center",
+              alignItems: "flex-start",
+              overflow: "hidden",
             }}
           >
-            <FlavorWheel
-              key={wheelResetKey}
-              mainSelections={mainSelections}
-              setMainSelections={setMainSelections}
-              secondarySelections={secondarySelections}
-              setSecondarySelections={setSecondarySelections}
-              cupProfileSelections={cupProfileSelections}
-              setCupProfileSelections={setCupProfileSelections}
-              onSecondaryChange={handleSecondaryChange}
-            />
+            <div
+              style={{
+                transform: `scale(${wheelScale})`,
+                transformOrigin: "top center",
+                width: "fit-content",
+              }}
+            >
+              <FlavorWheel
+                key={wheelResetKey}
+                mainSelections={mainSelections}
+                setMainSelections={setMainSelections}
+                secondarySelections={secondarySelections}
+                setSecondarySelections={setSecondarySelections}
+                cupProfileSelections={cupProfileSelections}
+                setCupProfileSelections={setCupProfileSelections}
+                onSecondaryChange={handleSecondaryChange}
+              />
+            </div>
           </div>
         </div>
 
         <div
           style={{
-            flex: "0 1 420px",
-            minWidth: 320,
+            flex: isMobile || isTablet ? "1 1 auto" : "0 1 420px",
+            width: isMobile || isTablet ? "100%" : "420px",
+            minWidth: 0,
             display: "flex",
             flexDirection: "column",
-            gap: 20,
+            gap: isMobile ? 16 : 20,
           }}
         >
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 14,
+              alignItems: isMobile ? "flex-start" : "center",
+              flexDirection: isMobile ? "column" : "row",
+              marginBottom: 0,
               gap: 12,
             }}
           >
-  <h2
-    style={{
-      ...sectionTitleStyle,
-      marginBottom: 0,
-    }}
-  >
-    Tasting Info
-  </h2>
+            <h2
+              style={{
+                ...sectionTitleStyle,
+                marginBottom: 0,
+              }}
+            >
+              Tasting Info
+            </h2>
 
-  <div
-    style={{
-      display: "flex",
-      gap: 6,
-      flexWrap: "wrap",
-      justifyContent: "flex-end",
-    }}
-  >
-    <button
-      onClick={() => changeLang("en")}
-      style={{
-        ...languageButtonStyle,
-        height: 24,
-        padding: "0 8px",
-        fontSize: 11,
-        borderRadius: 999,
-      }}
-    >
-      EN
-    </button>
-    <button
-      onClick={() => changeLang("ja")}
-      style={{
-        ...languageButtonStyle,
-        height: 24,
-        padding: "0 8px",
-        fontSize: 11,
-        borderRadius: 999,
-      }}
-    >
-      JP
-    </button>
-    <button
-      onClick={() => changeLang("es")}
-      style={{
-        ...languageButtonStyle,
-        height: 24,
-        padding: "0 8px",
-        fontSize: 11,
-        borderRadius: 999,
-      }}
-    >
-      ES
-    </button>
-  </div>
-</div>
+            <div
+              style={{
+                display: "flex",
+                gap: 6,
+                flexWrap: "wrap",
+                justifyContent: isMobile ? "flex-start" : "flex-end",
+              }}
+            >
+              <button
+                onClick={() => changeLang("en")}
+                style={{
+                  ...languageButtonStyle,
+                  background: lang === "en" ? "#f3efe8" : "#fff",
+                }}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLang("ja")}
+                style={{
+                  ...languageButtonStyle,
+                  background: lang === "ja" ? "#f3efe8" : "#fff",
+                }}
+              >
+                JP
+              </button>
+              <button
+                onClick={() => changeLang("es")}
+                style={{
+                  ...languageButtonStyle,
+                  background: lang === "es" ? "#f3efe8" : "#fff",
+                }}
+              >
+                ES
+              </button>
+            </div>
+          </div>
 
           <div
             style={{
               background: "#fff",
               borderRadius: 16,
-              padding: 20,
+              padding: isMobile ? 14 : 20,
               border: "1px solid #e5ded3",
             }}
           >
-
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
                 gap: 12,
               }}
             >
@@ -631,28 +687,29 @@ const handleEdit = (item) => {
                 />
               </div>
 
-             <div>
-  <label style={infoLabelStyle}>Roaster</label>
-  <input
-    type="text"
-    value={roaster}
-    onChange={(e) => setRoaster(e.target.value)}
-    style={inputStyle}
-  />
-</div>
-<div style={{ gridColumn: "1 / -1" }}>
-  <label style={infoLabelStyle}>Memo</label>
-  <textarea
-    value={memo}
-    onChange={(e) => setMemo(e.target.value)}
-    style={{
-      ...inputStyle,
-      minHeight: 96,
-      resize: "vertical",
-      fontFamily: "inherit",
-    }}
-  />
-</div>
+              <div>
+                <label style={infoLabelStyle}>Roaster</label>
+                <input
+                  type="text"
+                  value={roaster}
+                  onChange={(e) => setRoaster(e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={infoLabelStyle}>Memo</label>
+                <textarea
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  style={{
+                    ...inputStyle,
+                    minHeight: 96,
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
             </div>
 
             <div
@@ -666,6 +723,10 @@ const handleEdit = (item) => {
               <button onClick={handleSave} style={buttonStyle}>
                 Save
               </button>
+
+              <button onClick={handleResetWheel} style={buttonStyle}>
+                Reset Wheel
+              </button>
             </div>
           </div>
 
@@ -673,7 +734,7 @@ const handleEdit = (item) => {
             style={{
               background: "#fff",
               borderRadius: 16,
-              padding: 20,
+              padding: isMobile ? 14 : 20,
               border: "1px solid #e5ded3",
             }}
           >
