@@ -48,6 +48,18 @@ function FlavorWheel({
   const [activeWheel, setActiveWheel] = useState("main");
   const [mainSelectedMids, setMainSelectedMids] = useState([]);
   const [secondarySelectedMids, setSecondarySelectedMids] = useState([]);
+  const [screenSize, setScreenSize] = useState(window.innerWidth);
+
+useEffect(() => {
+  const handleResize = () => setScreenSize(window.innerWidth);
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
+
+const wheelMaxWidth =
+  screenSize < 500 ? "100%" :
+  screenSize < 900 ? "90%" :
+  "900px";
 
   const isSecondaryWheel = activeWheel === "secondary";
 
@@ -590,17 +602,17 @@ useEffect(() => {
     return secondaryWheelSelections.includes(seg.id) ? "#111111" : "#8d867b";
   };
 
-  return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: 900,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 20,
-      }}
-    >
+return (
+  <div
+    style={{
+      width: wheelMaxWidth,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 20,
+      margin: "0 auto",
+    }}
+  >
       <div
         style={{
           width: "100%",
@@ -610,16 +622,18 @@ useEffect(() => {
           justifyContent: "center",
         }}
       >
-        <svg
-          viewBox="0 0 900 900"
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "block",
-            background: "#e7e3dd",
-            borderRadius: 20,
-          }}
-        >
+   <svg
+  viewBox="0 0 900 900"
+  style={{
+    width: "100%",
+    height: "100%",
+    display: "block",
+    background: "#e7e3dd",
+    borderRadius: 20,
+    transform: screenSize < 500 ? "scale(1.18)" : screenSize < 900 ? "scale(1.08)" : "scale(1)",
+    transformOrigin: "center center",
+  }}
+>
           {isSecondaryWheel ? (
             <>
      {secondaryLeafBlockSegments.map((seg) => {
