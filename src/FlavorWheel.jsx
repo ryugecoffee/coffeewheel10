@@ -57,9 +57,9 @@ useEffect(() => {
 }, []);
 
 const wheelMaxWidth =
-  screenSize < 500 ? "100%" :
-  screenSize < 900 ? "90%" :
-  "900px";
+  screenSize < 500 ? "100%" :   // iPhone
+  screenSize < 900 ? "80%" :    // iPad
+  "600px";                      // PC
 
   const isSecondaryWheel = activeWheel === "secondary";
 
@@ -630,7 +630,6 @@ return (
     display: "block",
     background: "#e7e3dd",
     borderRadius: 20,
-    transform: screenSize < 500 ? "scale(1.18)" : screenSize < 900 ? "scale(1.08)" : "scale(1)",
     transformOrigin: "center center",
   }}
 >

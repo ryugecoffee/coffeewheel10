@@ -285,7 +285,6 @@ function App() {
 
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1100;
-  const wheelScale = getWheelScale(windowWidth);
   const wheelStageHeight = getWheelStageHeight(windowWidth);
 
   const changeLang = (newLang) => {
@@ -566,24 +565,24 @@ function App() {
               overflow: "hidden",
             }}
           >
-            <div
-              style={{
-                transform: `scale(${wheelScale})`,
-                transformOrigin: "top center",
-                width: "fit-content",
-              }}
-            >
-              <FlavorWheel
-                key={wheelResetKey}
-                mainSelections={mainSelections}
-                setMainSelections={setMainSelections}
-                secondarySelections={secondarySelections}
-                setSecondarySelections={setSecondarySelections}
-                cupProfileSelections={cupProfileSelections}
-                setCupProfileSelections={setCupProfileSelections}
-                onSecondaryChange={handleSecondaryChange}
-              />
-            </div>
+         <div
+  style={{
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+  }}
+>
+  <FlavorWheel
+    key={wheelResetKey}
+    mainSelections={mainSelections}
+    setMainSelections={setMainSelections}
+    secondarySelections={secondarySelections}
+    setSecondarySelections={setSecondarySelections}
+    cupProfileSelections={cupProfileSelections}
+    setCupProfileSelections={setCupProfileSelections}
+    onSecondaryChange={handleSecondaryChange}
+  />
+</div>
           </div>
         </div>
 
