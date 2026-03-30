@@ -45,13 +45,6 @@ const getViewportWidth = () => {
   return window.innerWidth;
 };
 
-const getWheelScale = (width) => {
-  if (width < 430) return 0.78;   // iPhone
-  if (width < 768) return 0.88;   // 大きめスマホ
-  if (width < 1100) return 0.98;  // iPad
-  return 1;
-};
-
 const getWheelStageHeight = (width) => {
   if (width < 430) return 590;
   if (width < 768) return 670;
@@ -115,7 +108,9 @@ const SavedNoteCard = memo(function SavedNoteCard({
     } catch (error) {
       console.error("PDF generation failed:", error);
       alert(
-        `PDF generation failed:\n${error?.message || error?.toString() || "Unknown error"}`
+        `PDF generation failed:\n${
+          error?.message || error?.toString() || "Unknown error"
+        }`
       );
     } finally {
       setIsGeneratingPdf(false);
@@ -256,6 +251,12 @@ const SavedNoteCard = memo(function SavedNoteCard({
 });
 
 function App() {
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
+  const [showFarmSuggestions, setShowFarmSuggestions] = useState(false);
+  const [showVarietySuggestions, setShowVarietySuggestions] = useState(false);
+  const [showDripperSuggestions, setShowDripperSuggestions] = useState(false);
+  const [showRoasterSuggestions, setShowRoasterSuggestions] = useState(false);
+
   const [country, setCountry] = useState("");
   const [farm, setFarm] = useState("");
   const [roastDate, setRoastDate] = useState("");
@@ -269,10 +270,45 @@ function App() {
   const [mainSelections, setMainSelections] = useState([]);
   const [secondarySelections, setSecondarySelections] = useState([]);
   const [savedNotes, setSavedNotes] = useState([]);
+
+  const [farmHistory, setFarmHistory] = useState([]);
+  const [varietyHistory, setVarietyHistory] = useState([]);
+  const [dripperHistory, setDripperHistory] = useState([]);
+  const [roasterHistory, setRoasterHistory] = useState([]);
+
   const [wheelResetKey, setWheelResetKey] = useState(0);
   const [windowWidth, setWindowWidth] = useState(getViewportWidth());
 
   const wheelSectionRef = useRef(null);
+
+  const countryOptions = [
+    "Ethiopia",
+    "Kenya",
+    "Rwanda",
+    "Burundi",
+    "Tanzania",
+    "Uganda",
+    "Colombia",
+    "Brazil",
+    "Guatemala",
+    "Honduras",
+    "El Salvador",
+    "Costa Rica",
+    "Panama",
+    "Nicaragua",
+    "Peru",
+    "Bolivia",
+    "Mexico",
+    "Indonesia",
+    "Papua New Guinea",
+    "Yemen",
+    "China",
+    "Thailand",
+    "Laos",
+    "Vietnam",
+    "India",
+    "Japan",
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -300,6 +336,25 @@ function App() {
     }
   };
 
+  const addToHistory = (value, setter, storageKey) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    setter((prev) => {
+      const exists = prev.some(
+        (item) => item.toLowerCase() === trimmed.toLowerCase()
+      );
+      if (exists) return prev;
+
+      const updated = [...prev, trimmed].sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: "base" })
+      );
+
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const resetForm = () => {
     setCountry("");
     setFarm("");
@@ -309,6 +364,12 @@ function App() {
     setRoaster("");
     setMemo("");
     setLang("en");
+
+    setShowCountrySuggestions(false);
+    setShowFarmSuggestions(false);
+    setShowVarietySuggestions(false);
+    setShowDripperSuggestions(false);
+    setShowRoasterSuggestions(false);
 
     setCupProfileSelections([]);
     setMainSelections([]);
@@ -342,6 +403,32 @@ function App() {
     const savedList = localStorage.getItem("coffee-note-saved");
     if (savedList) {
       setSavedNotes(JSON.parse(savedList));
+    }
+
+    const savedFarmHistory = localStorage.getItem("coffee-note-farm-history");
+    if (savedFarmHistory) {
+      setFarmHistory(JSON.parse(savedFarmHistory));
+    }
+
+    const savedVarietyHistory = localStorage.getItem(
+      "coffee-note-variety-history"
+    );
+    if (savedVarietyHistory) {
+      setVarietyHistory(JSON.parse(savedVarietyHistory));
+    }
+
+    const savedDripperHistory = localStorage.getItem(
+      "coffee-note-dripper-history"
+    );
+    if (savedDripperHistory) {
+      setDripperHistory(JSON.parse(savedDripperHistory));
+    }
+
+    const savedRoasterHistory = localStorage.getItem(
+      "coffee-note-roaster-history"
+    );
+    if (savedRoasterHistory) {
+      setRoasterHistory(JSON.parse(savedRoasterHistory));
     }
   }, []);
 
@@ -415,6 +502,11 @@ function App() {
     const updated = [newNote, ...savedNotes];
     setSavedNotes(updated);
     localStorage.setItem("coffee-note-saved", JSON.stringify(updated));
+
+    addToHistory(farm, setFarmHistory, "coffee-note-farm-history");
+    addToHistory(variety, setVarietyHistory, "coffee-note-variety-history");
+    addToHistory(dripper, setDripperHistory, "coffee-note-dripper-history");
+    addToHistory(roaster, setRoasterHistory, "coffee-note-roaster-history");
 
     resetForm();
     scrollToWheel();
@@ -511,6 +603,64 @@ function App() {
     letterSpacing: "0.2px",
   };
 
+  const filteredCountryOptions = countryOptions.filter((item) =>
+    country.trim().length > 0
+      ? item.toLowerCase().includes(country.trim().toLowerCase())
+      : false
+  );
+
+  const filteredFarmHistory = farmHistory.filter((item) =>
+    farm.trim().length > 0
+      ? item.toLowerCase().includes(farm.trim().toLowerCase())
+      : false
+  );
+
+  const filteredVarietyHistory = varietyHistory.filter((item) =>
+    variety.trim().length > 0
+      ? item.toLowerCase().includes(variety.trim().toLowerCase())
+      : false
+  );
+
+  const filteredDripperHistory = dripperHistory.filter((item) =>
+    dripper.trim().length > 0
+      ? item.toLowerCase().includes(dripper.trim().toLowerCase())
+      : false
+  );
+
+  const filteredRoasterHistory = roasterHistory.filter((item) =>
+    roaster.trim().length > 0
+      ? item.toLowerCase().includes(roaster.trim().toLowerCase())
+      : false
+  );
+
+  const suggestionBoxStyle = {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    marginTop: 6,
+    border: "1px solid #e5ded3",
+    borderRadius: 10,
+    background: "#fff",
+    overflow: "hidden",
+    zIndex: 20,
+    boxShadow: "0 10px 24px rgba(0, 0, 0, 0.08)",
+    maxHeight: 220,
+    overflowY: "auto",
+  };
+
+  const suggestionItemStyle = {
+    width: "100%",
+    textAlign: "left",
+    padding: "10px 12px",
+    border: "none",
+    borderBottom: "1px solid #f0ebe4",
+    background: "#fff",
+    color: "#2f2a26",
+    fontSize: 14,
+    cursor: "pointer",
+  };
+
   return (
     <div
       style={{
@@ -565,24 +715,24 @@ function App() {
               overflow: "hidden",
             }}
           >
-         <div
-  style={{
-    width: "100%",
-    display: "flex",
-    justifyContent: "center",
-  }}
->
-  <FlavorWheel
-    key={wheelResetKey}
-    mainSelections={mainSelections}
-    setMainSelections={setMainSelections}
-    secondarySelections={secondarySelections}
-    setSecondarySelections={setSecondarySelections}
-    cupProfileSelections={cupProfileSelections}
-    setCupProfileSelections={setCupProfileSelections}
-    onSecondaryChange={handleSecondaryChange}
-  />
-</div>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <FlavorWheel
+                key={wheelResetKey}
+                mainSelections={mainSelections}
+                setMainSelections={setMainSelections}
+                secondarySelections={secondarySelections}
+                setSecondarySelections={setSecondarySelections}
+                cupProfileSelections={cupProfileSelections}
+                setCupProfileSelections={setCupProfileSelections}
+                onSecondaryChange={handleSecondaryChange}
+              />
+            </div>
           </div>
         </div>
 
@@ -669,24 +819,94 @@ function App() {
                 alignItems: "stretch",
               }}
             >
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, position: "relative" }}>
                 <label style={infoLabelStyle}>Country</label>
                 <input
                   type="text"
                   value={country}
-                  onChange={(e) => setCountry(e.target.value)}
+                  onChange={(e) => {
+                    setCountry(e.target.value);
+                    setShowCountrySuggestions(e.target.value.trim().length > 0);
+                  }}
+                  onFocus={() => {
+                    if (country.trim().length > 0) {
+                      setShowCountrySuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowCountrySuggestions(false), 120);
+                  }}
                   style={inputStyle}
                 />
+
+                {showCountrySuggestions && filteredCountryOptions.length > 0 && (
+                  <div style={suggestionBoxStyle}>
+                    {filteredCountryOptions.map((item, index) => (
+                      <button
+                        key={`country-option-${index}`}
+                        type="button"
+                        onMouseDown={() => {
+                          setCountry(item);
+                          setShowCountrySuggestions(false);
+                        }}
+                        style={{
+                          ...suggestionItemStyle,
+                          borderBottom:
+                            index === filteredCountryOptions.length - 1
+                              ? "none"
+                              : suggestionItemStyle.borderBottom,
+                        }}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, position: "relative" }}>
                 <label style={infoLabelStyle}>Farm</label>
                 <input
                   type="text"
                   value={farm}
-                  onChange={(e) => setFarm(e.target.value)}
+                  onChange={(e) => {
+                    setFarm(e.target.value);
+                    setShowFarmSuggestions(e.target.value.trim().length > 0);
+                  }}
+                  onFocus={() => {
+                    if (farm.trim().length > 0) {
+                      setShowFarmSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowFarmSuggestions(false), 120);
+                  }}
                   style={inputStyle}
                 />
+
+                {showFarmSuggestions && filteredFarmHistory.length > 0 && (
+                  <div style={suggestionBoxStyle}>
+                    {filteredFarmHistory.map((item, index) => (
+                      <button
+                        key={`farm-history-${index}`}
+                        type="button"
+                        onMouseDown={() => {
+                          setFarm(item);
+                          setShowFarmSuggestions(false);
+                        }}
+                        style={{
+                          ...suggestionItemStyle,
+                          borderBottom:
+                            index === filteredFarmHistory.length - 1
+                              ? "none"
+                              : suggestionItemStyle.borderBottom,
+                        }}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ minWidth: 0 }}>
@@ -699,34 +919,148 @@ function App() {
                 />
               </div>
 
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, position: "relative" }}>
                 <label style={infoLabelStyle}>Variety</label>
                 <input
                   type="text"
                   value={variety}
-                  onChange={(e) => setVariety(e.target.value)}
+                  onChange={(e) => {
+                    setVariety(e.target.value);
+                    setShowVarietySuggestions(
+                      e.target.value.trim().length > 0
+                    );
+                  }}
+                  onFocus={() => {
+                    if (variety.trim().length > 0) {
+                      setShowVarietySuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowVarietySuggestions(false), 120);
+                  }}
                   style={inputStyle}
                 />
+
+                {showVarietySuggestions &&
+                  filteredVarietyHistory.length > 0 && (
+                    <div style={suggestionBoxStyle}>
+                      {filteredVarietyHistory.map((item, index) => (
+                        <button
+                          key={`variety-history-${index}`}
+                          type="button"
+                          onMouseDown={() => {
+                            setVariety(item);
+                            setShowVarietySuggestions(false);
+                          }}
+                          style={{
+                            ...suggestionItemStyle,
+                            borderBottom:
+                              index === filteredVarietyHistory.length - 1
+                                ? "none"
+                                : suggestionItemStyle.borderBottom,
+                          }}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
 
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, position: "relative" }}>
                 <label style={infoLabelStyle}>Dripper</label>
                 <input
                   type="text"
                   value={dripper}
-                  onChange={(e) => setDripper(e.target.value)}
+                  onChange={(e) => {
+                    setDripper(e.target.value);
+                    setShowDripperSuggestions(
+                      e.target.value.trim().length > 0
+                    );
+                  }}
+                  onFocus={() => {
+                    if (dripper.trim().length > 0) {
+                      setShowDripperSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowDripperSuggestions(false), 120);
+                  }}
                   style={inputStyle}
                 />
+
+                {showDripperSuggestions &&
+                  filteredDripperHistory.length > 0 && (
+                    <div style={suggestionBoxStyle}>
+                      {filteredDripperHistory.map((item, index) => (
+                        <button
+                          key={`dripper-history-${index}`}
+                          type="button"
+                          onMouseDown={() => {
+                            setDripper(item);
+                            setShowDripperSuggestions(false);
+                          }}
+                          style={{
+                            ...suggestionItemStyle,
+                            borderBottom:
+                              index === filteredDripperHistory.length - 1
+                                ? "none"
+                                : suggestionItemStyle.borderBottom,
+                          }}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
 
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, position: "relative" }}>
                 <label style={infoLabelStyle}>Roaster</label>
                 <input
                   type="text"
                   value={roaster}
-                  onChange={(e) => setRoaster(e.target.value)}
+                  onChange={(e) => {
+                    setRoaster(e.target.value);
+                    setShowRoasterSuggestions(
+                      e.target.value.trim().length > 0
+                    );
+                  }}
+                  onFocus={() => {
+                    if (roaster.trim().length > 0) {
+                      setShowRoasterSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowRoasterSuggestions(false), 120);
+                  }}
                   style={inputStyle}
                 />
+
+                {showRoasterSuggestions &&
+                  filteredRoasterHistory.length > 0 && (
+                    <div style={suggestionBoxStyle}>
+                      {filteredRoasterHistory.map((item, index) => (
+                        <button
+                          key={`roaster-history-${index}`}
+                          type="button"
+                          onMouseDown={() => {
+                            setRoaster(item);
+                            setShowRoasterSuggestions(false);
+                          }}
+                          style={{
+                            ...suggestionItemStyle,
+                            borderBottom:
+                              index === filteredRoasterHistory.length - 1
+                                ? "none"
+                                : suggestionItemStyle.borderBottom,
+                          }}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               <div style={{ gridColumn: "1 / -1", minWidth: 0 }}>

@@ -355,9 +355,6 @@ export default function CoffeeFlavorWheelPDF({
         <Text style={styles.sectionTitle}>CUP PROFILE</Text>
         <View style={styles.chartBlock}>
           <View style={styles.chartColumn}>
-            <View style={styles.wheelWrap}>
-              <SecondaryWheelChart selectedCupProfile={cupProfileList} />
-            </View>
 
             {cupProfileList.length > 0 ? (
               <View style={styles.wordGrid}>
