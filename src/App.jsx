@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import FlavorWheel from "./FlavorWheel.jsx";
-
+import CoffeeFlavorWheelPDF from "./CoffeeFlavorWheelPDF.jsx";
+import { pdf } from "@react-pdf/renderer";
 
 const buttonStyle = {
   height: 30,
@@ -41,8 +42,61 @@ const SavedNoteCard = memo(function SavedNoteCard({
 }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-  const handlePdfDownload = async () => {
-  alert("PDF is temporarily disabled for debugging.");
+const handlePdfDownload = async () => {
+  try {
+    setIsGeneratingPdf(true);
+
+    const savedFlavorNotes =
+      item.secondarySelections && item.secondarySelections.length > 0
+        ? item.secondarySelections
+        : item.mainSelections && item.mainSelections.length > 0
+        ? item.mainSelections
+        : [];
+
+    const savedCupProfile =
+      item.cupProfileSelections && item.cupProfileSelections.length > 0
+        ? item.cupProfileSelections
+        : item.cupProfile && item.cupProfile.length > 0
+        ? item.cupProfile
+        : [];
+
+    const blob = await pdf(
+ <CoffeeFlavorWheelPDF
+  country={item.country || ""}
+  farm={item.farm || ""}
+  roastDate={item.roastDate || ""}
+  variety={item.variety || ""}
+  dripper={item.dripper || ""}
+  process={item.process || ""}
+  roaster={item.roaster || ""}
+  memo={item.memo || ""}
+  flavors={savedFlavorNotes}
+  cupProfile={savedCupProfile}
+/>
+    ).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const today = new Date().toISOString().split("T")[0];
+
+const safeName = `${item.country || "coffee"}-${item.farm || "farm"}-${today}`
+  .replace(/\s+/g, "_")
+  .replace(/[^\w\-]/g, "");
+
+link.download = `${safeName}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+} catch (error) {
+  console.error("PDF generation failed:", error);
+  alert(
+    `PDF generation failed:\n${error?.message || error?.toString() || "Unknown error"}`
+  );
+} finally {
+    setIsGeneratingPdf(false);
+  }
 };
 
   const labelStyle = {
@@ -336,23 +390,25 @@ const handleSave = () => {
     }
   };
 
-  const handleEdit = (item) => {
-setCountry(item.country || "");
-setFarm(item.farm || "");
-setRoastDate(item.roastDate || "");
-setVariety(item.variety || "");
-setDripper(item.dripper || "");
-setProcess(item.process || "");
-setRoaster(item.roaster || "");
-setMemo(item.memo || "");
-setLang(item.lang || "en");
+const handleEdit = (item) => {
+  setCountry(item.country || "");
+  setFarm(item.farm || "");
+  setRoastDate(item.roastDate || "");
+  setVariety(item.variety || "");
+  setDripper(item.dripper || "");
+  setProcess(item.process || "");
+  setRoaster(item.roaster || "");
+  setMemo(item.memo || "");
+  setLang(item.lang || "en");
 
-    setCupProfileSelections(
-      item.cupProfileSelections || item.cupProfile || []
-    );
-    setMainSelections(item.mainSelections || []);
-    setSecondarySelections(item.secondarySelections || []);
-  };
+  setCupProfileSelections([
+    ...((item.cupProfileSelections || item.cupProfile || []).filter(Boolean)),
+  ]);
+  setMainSelections([...(item.mainSelections || []).filter(Boolean)]);
+  setSecondarySelections([...(item.secondarySelections || []).filter(Boolean)]);
+
+  setWheelResetKey((prev) => prev + 1);
+};
 
   const inputStyle = {
     width: "100%",

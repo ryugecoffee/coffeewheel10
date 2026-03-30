@@ -344,7 +344,7 @@ export function buildMainWheelSegments() {
       const midSpan = midChildrenCount * anglePerLeaf;
       const midStart = childAngle;
       const midEnd = childAngle + midSpan;
-      const hasOuterBlock = !noOuterBlockLabels.has(mid.label);
+      const hasOuterBlock = mid.children.length > 1;
 
       ring2Segments.push({
         label: mid.label,
