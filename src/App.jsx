@@ -3,6 +3,8 @@ import { pdf } from "@react-pdf/renderer";
 import FlavorWheel from "./FlavorWheel";
 import CoffeeFlavorWheelPDF from "./CoffeeFlavorWheelPDF";
 import { buildMainWheelSegments } from "./wheelGeometry";
+import { t } from "./i18n";
+import { translateFlavor } from "./flavorTranslations";
 
 const CURRENT_NOTE_KEY = "coffee-note-current";
 const SAVED_NOTES_KEY = "coffee-note-saved";
@@ -64,13 +66,94 @@ const emptyNote = {
   cupProfileSelections: [],
   mainSelections: [],
   secondarySelections: [],
+  selectedMainLabels: [],
+  selectedMiddleLabels: [],
+  selectedLeafLabels: [],
 };
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
 }
+function normalizeLabel(label = "") {
+  return String(label)
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+const wheelGeometry = buildMainWheelSegments();
+
+const ring1LabelSet = new Set(
+  safeArray(wheelGeometry?.ring1Segments).map((seg) =>
+    normalizeLabel(seg?.label)
+  )
+);
+
+const ring2LabelSet = new Set(
+  safeArray(wheelGeometry?.ring2Segments).map((seg) =>
+    normalizeLabel(seg?.label)
+  )
+);
+
+const ring3LabelSet = new Set(
+  safeArray(wheelGeometry?.ring3Segments).map((seg) =>
+    normalizeLabel(seg?.label)
+  )
+);
+
+function splitMainSelectionsForPdf(
+  mainSelections = [],
+  secondarySelections = []
+) {
+  const tops = safeArray(mainSelections);
+  const details = safeArray(secondarySelections);
+
+  const topLabels = [];
+  const middleLabels = [];
+  const leafLabels = [];
+
+  tops.forEach((label) => {
+    const raw = String(label || "").trim();
+    const normalized = normalizeLabel(raw);
+    if (!raw) return;
+
+    if (
+      MAIN_WHEEL_TOP_LABELS.includes(normalized) ||
+      ring1LabelSet.has(normalized)
+    ) {
+      topLabels.push(raw);
+    }
+  });
+
+  details.forEach((label) => {
+    const raw = String(label || "").trim();
+    const normalized = normalizeLabel(raw);
+    if (!raw) return;
+
+    if (ring2LabelSet.has(normalized)) {
+      middleLabels.push(raw);
+      return;
+    }
+
+    if (ring3LabelSet.has(normalized)) {
+      leafLabels.push(raw);
+    }
+  });
+
+  return {
+    selectedMainLabels: [...new Set(topLabels)],
+    selectedMiddleLabels: [...new Set(middleLabels)],
+    selectedLeafLabels: [...new Set(leafLabels)],
+  };
+}
 
 function normalizeSavedNote(note) {
+  const mainSelections = safeArray(note?.mainSelections);
+  const derived = splitMainSelectionsForPdf(
+  mainSelections,
+  safeArray(note?.secondarySelections)
+);
+
   return {
     country: note?.country || "",
     farm: note?.farm || "",
@@ -81,8 +164,17 @@ function normalizeSavedNote(note) {
     memo: note?.memo || "",
     lang: note?.lang || "en",
     cupProfileSelections: safeArray(note?.cupProfileSelections),
-    mainSelections: safeArray(note?.mainSelections),
+    mainSelections,
     secondarySelections: safeArray(note?.secondarySelections),
+    selectedMainLabels: safeArray(note?.selectedMainLabels).length
+      ? safeArray(note?.selectedMainLabels)
+      : derived.selectedMainLabels,
+    selectedMiddleLabels: safeArray(note?.selectedMiddleLabels).length
+      ? safeArray(note?.selectedMiddleLabels)
+      : derived.selectedMiddleLabels,
+    selectedLeafLabels: safeArray(note?.selectedLeafLabels).length
+      ? safeArray(note?.selectedLeafLabels)
+      : derived.selectedLeafLabels,
     savedAt: note?.savedAt || "",
   };
 }
@@ -125,22 +217,29 @@ function loadJson(key, fallback) {
 
 function loadCurrentNote() {
   const raw = loadJson(CURRENT_NOTE_KEY, emptyNote);
+  const mainSelections = safeArray(raw?.mainSelections);
+  const derived = splitMainSelectionsForPdf(
+  mainSelections,
+  safeArray(raw?.secondarySelections)
+);
+
   return {
     ...emptyNote,
     ...raw,
-    mainSelections: safeArray(raw?.mainSelections),
+    mainSelections,
     secondarySelections: safeArray(raw?.secondarySelections),
     cupProfileSelections: safeArray(raw?.cupProfileSelections),
+    selectedMainLabels: safeArray(raw?.selectedMainLabels).length
+      ? safeArray(raw?.selectedMainLabels)
+      : derived.selectedMainLabels,
+    selectedMiddleLabels: safeArray(raw?.selectedMiddleLabels).length
+      ? safeArray(raw?.selectedMiddleLabels)
+      : derived.selectedMiddleLabels,
+    selectedLeafLabels: safeArray(raw?.selectedLeafLabels).length
+      ? safeArray(raw?.selectedLeafLabels)
+      : derived.selectedLeafLabels,
   };
 }
-const ring1LabelSet = new Set(
-  buildMainWheelSegments().ring1Segments.map((seg) => seg.label)
-);
-
-const getVisibleFlavorSelections = (selections = []) => {
-  if (!Array.isArray(selections)) return [];
-  return [...new Set(selections.filter((label) => label && !ring1LabelSet.has(label)))];
-};
 
 function loadSavedNotes() {
   const raw = loadJson(SAVED_NOTES_KEY, []);
@@ -167,11 +266,13 @@ function addToHistory(history, value) {
     .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 }
 
-function formatSavedAt(value) {
+function formatSavedAt(value, lang) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("ja-JP");
+  return date.toLocaleString(
+    lang === "ja" ? "ja-JP" : lang === "es" ? "es-ES" : "en-US"
+  );
 }
 
 function createNoteIdentity(note) {
@@ -198,6 +299,36 @@ function getVisibleMainSelections(mainSelections) {
 
 function getVisibleOuterSelections(secondarySelections) {
   return safeArray(secondarySelections).filter(Boolean);
+}
+
+function buildPdfPayload(target, fallbackLang = "en") {
+  const normalized = normalizeSavedNote(target || {});
+  const split = splitMainSelectionsForPdf(
+  normalized.mainSelections,
+  normalized.secondarySelections
+);
+
+  return {
+    ...normalized,
+    lang: normalized.lang || fallbackLang,
+    selectedMainLabels:
+      normalized.selectedMainLabels?.length > 0
+        ? normalized.selectedMainLabels
+        : split.selectedMainLabels,
+    selectedMiddleLabels:
+      normalized.selectedMiddleLabels?.length > 0
+        ? normalized.selectedMiddleLabels
+        : split.selectedMiddleLabels,
+    selectedLeafLabels:
+      normalized.selectedLeafLabels?.length > 0
+        ? normalized.selectedLeafLabels
+        : split.selectedLeafLabels,
+    selectedFlavors:
+      normalized.selectedLeafLabels?.length > 0
+        ? normalized.selectedLeafLabels
+        : split.selectedLeafLabels,
+    cupProfile: safeArray(normalized.cupProfileSelections),
+  };
 }
 
 function App() {
@@ -243,6 +374,8 @@ function App() {
   const toastTimerRef = useRef(null);
 
   useEffect(() => {
+    const split = splitMainSelectionsForPdf(mainSelections, secondarySelections);
+
     const currentNote = {
       country,
       farm,
@@ -252,9 +385,12 @@ function App() {
       roaster,
       memo,
       lang,
-      cupProfileSelections,
-      mainSelections,
-      secondarySelections,
+      cupProfileSelections: safeArray(cupProfileSelections),
+      mainSelections: safeArray(mainSelections),
+      secondarySelections: safeArray(secondarySelections),
+      selectedMainLabels: split.selectedMainLabels,
+      selectedMiddleLabels: split.selectedMiddleLabels,
+      selectedLeafLabels: split.selectedLeafLabels,
     };
 
     localStorage.setItem(CURRENT_NOTE_KEY, JSON.stringify(currentNote));
@@ -340,6 +476,8 @@ function App() {
     if (!keyword) return savedNotes;
 
     return savedNotes.filter((note) => {
+      const noteLang = note.lang || lang;
+
       const searchableText = [
         note.country,
         note.farm,
@@ -351,14 +489,17 @@ function App() {
         ...(note.mainSelections || []),
         ...(note.secondarySelections || []),
         ...(note.cupProfileSelections || []),
-        formatSavedAt(note.savedAt),
+        ...(note.selectedMainLabels || []),
+        ...(note.selectedMiddleLabels || []),
+        ...(note.selectedLeafLabels || []),
+        formatSavedAt(note.savedAt, noteLang),
       ]
         .join(" ")
         .toLowerCase();
 
       return searchableText.includes(keyword);
     });
-  }, [savedNotes, searchTerm]);
+  }, [savedNotes, searchTerm, lang]);
 
   const showToast = () => {
     setSavedToast(true);
@@ -386,6 +527,7 @@ function App() {
 
   const handleSave = () => {
     const now = new Date().toISOString();
+    const split = splitMainSelectionsForPdf(mainSelections, secondarySelections);
 
     const noteData = {
       country: country.trim(),
@@ -399,6 +541,9 @@ function App() {
       cupProfileSelections: safeArray(cupProfileSelections),
       mainSelections: safeArray(mainSelections),
       secondarySelections: safeArray(secondarySelections),
+      selectedMainLabels: split.selectedMainLabels,
+      selectedMiddleLabels: split.selectedMiddleLabels,
+      selectedLeafLabels: split.selectedLeafLabels,
       savedAt: now,
     };
 
@@ -476,42 +621,69 @@ function App() {
 
   const handleDownloadPDF = async (note) => {
     try {
+      const currentDraft = {
+        country,
+        farm,
+        roastDate,
+        variety,
+        dripper,
+        roaster,
+        memo,
+        lang,
+        cupProfileSelections,
+        mainSelections,
+        secondarySelections,
+        savedAt: new Date().toISOString(),
+      };
+
+      const target = note ? note : currentDraft;
+      const pdfPayload = buildPdfPayload(target, lang);
+
+      const fileSafe = (value) =>
+        String(value || "")
+          .trim()
+          .replace(/[\\/:*?"<>|]/g, "")
+          .replace(/\s+/g, "_");
+
+      const countryPart = fileSafe(pdfPayload.country) || "coffee";
+      const farmPart = fileSafe(pdfPayload.farm) || "note";
+
+      const baseDate = pdfPayload.savedAt ? new Date(pdfPayload.savedAt) : new Date();
+      const yyyy = baseDate.getFullYear();
+      const mm = String(baseDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(baseDate.getDate()).padStart(2, "0");
+      const fileName = `${countryPart}_${farmPart}_${yyyy}-${mm}-${dd}.pdf`;
+
       const blob = await pdf(
         <CoffeeFlavorWheelPDF
-          country={note.country}
-          farm={note.farm}
-          roastDate={note.roastDate}
-          variety={note.variety}
-          dripper={note.dripper}
-          roaster={note.roaster}
-          memo={note.memo}
-          lang={note.lang}
-          mainSelections={note.mainSelections}
-          secondarySelections={note.secondarySelections}
-          cupProfileSelections={note.cupProfileSelections}
-          selectedMainLabels={note.mainSelections}
-          selectedSecondaryLabels={note.secondarySelections}
-          selectedCupProfileLabels={note.cupProfileSelections}
+          language={pdfPayload.lang}
+          note={pdfPayload}
+          country={pdfPayload.country || ""}
+          farm={pdfPayload.farm || ""}
+          roastDate={pdfPayload.roastDate || ""}
+          variety={pdfPayload.variety || ""}
+          dripper={pdfPayload.dripper || ""}
+          roaster={pdfPayload.roaster || ""}
+          memo={pdfPayload.memo || ""}
+          savedAt={pdfPayload.savedAt || new Date().toISOString()}
+          selectedMainLabels={pdfPayload.selectedMainLabels}
+          selectedMiddleLabels={pdfPayload.selectedMiddleLabels}
+          selectedLeafLabels={pdfPayload.selectedLeafLabels}
+          selectedFlavors={pdfPayload.selectedFlavors}
+          cupProfile={pdfPayload.cupProfile}
         />
       ).toBlob();
-
-      const datePart = note.savedAt
-        ? new Date(note.savedAt).toISOString().slice(0, 10)
-        : new Date().toISOString().slice(0, 10);
-
-      const filename = [note.country || "Coffee", note.farm || "Note", datePart]
-        .filter(Boolean)
-        .join("_")
-        .replace(/[\\/:*?"<>|]/g, "-");
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${filename}.pdf`;
+      link.download = fileName;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("PDF export failed:", error);
+      console.error("PDF download error:", error);
     }
   };
 
@@ -603,7 +775,7 @@ function App() {
             pointerEvents: "none",
           }}
         >
-          Saved!
+          {t(lang, "savedToast")}
         </div>
       ) : null}
 
@@ -666,7 +838,7 @@ function App() {
                   lineHeight: 1.2,
                 }}
               >
-                Tasting Info
+                {t(lang, "tastingInfo")}
               </h2>
 
               <div style={{ display: "flex", gap: 6 }}>
@@ -699,7 +871,9 @@ function App() {
               }}
             >
               <div style={{ ...inputWrapStyle, gridColumn: "span 2" }}>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Country</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "country")}
+                </label>
                 <input
                   value={country}
                   onChange={(e) => {
@@ -712,7 +886,7 @@ function App() {
                       setShowCountrySuggestions(false);
                     }, 120);
                   }}
-                  placeholder="Country"
+                  placeholder={t(lang, "country")}
                   style={inputStyle}
                 />
                 {showCountrySuggestions && country.trim() ? (
@@ -727,7 +901,9 @@ function App() {
               </div>
 
               <div style={inputWrapStyle}>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Farm</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "farm")}
+                </label>
                 <input
                   value={farm}
                   onChange={(e) => {
@@ -740,7 +916,7 @@ function App() {
                       setShowFarmSuggestions(false);
                     }, 120);
                   }}
-                  placeholder="Farm"
+                  placeholder={t(lang, "farm")}
                   style={inputStyle}
                 />
                 {showFarmSuggestions && farm.trim() ? (
@@ -756,7 +932,9 @@ function App() {
               </div>
 
               <div>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Roast Date</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "roastDate")}
+                </label>
                 <input
                   type="date"
                   value={roastDate}
@@ -766,7 +944,9 @@ function App() {
               </div>
 
               <div style={inputWrapStyle}>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Variety</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "variety")}
+                </label>
                 <input
                   value={variety}
                   onChange={(e) => {
@@ -779,7 +959,7 @@ function App() {
                       setShowVarietySuggestions(false);
                     }, 120);
                   }}
-                  placeholder="Variety"
+                  placeholder={t(lang, "variety")}
                   style={inputStyle}
                 />
                 {showVarietySuggestions && variety.trim() ? (
@@ -795,7 +975,9 @@ function App() {
               </div>
 
               <div style={inputWrapStyle}>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Dripper</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "dripper")}
+                </label>
                 <input
                   value={dripper}
                   onChange={(e) => {
@@ -808,7 +990,7 @@ function App() {
                       setShowDripperSuggestions(false);
                     }, 120);
                   }}
-                  placeholder="Dripper"
+                  placeholder={t(lang, "dripper")}
                   style={inputStyle}
                 />
                 {showDripperSuggestions && dripper.trim() ? (
@@ -824,7 +1006,9 @@ function App() {
               </div>
 
               <div style={{ ...inputWrapStyle, gridColumn: "span 2" }}>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Roaster</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "roaster")}
+                </label>
                 <input
                   value={roaster}
                   onChange={(e) => {
@@ -837,7 +1021,7 @@ function App() {
                       setShowRoasterSuggestions(false);
                     }, 120);
                   }}
-                  placeholder="Roaster"
+                  placeholder={t(lang, "roaster")}
                   style={inputStyle}
                 />
                 {showRoasterSuggestions && roaster.trim() ? (
@@ -853,11 +1037,13 @@ function App() {
               </div>
 
               <div style={{ gridColumn: "span 2" }}>
-                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>Memo</label>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 13 }}>
+                  {t(lang, "memo")}
+                </label>
                 <textarea
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
-                  placeholder="Memo"
+                  placeholder={t(lang, "memo")}
                   style={{
                     ...inputStyle,
                     minHeight: 100,
@@ -876,11 +1062,19 @@ function App() {
               }}
             >
               <button type="button" onClick={handleSave} style={primaryButtonStyle}>
-                {editingIdentity ? "Update Note" : "Save Note"}
+                {editingIdentity ? t(lang, "updateNote") : t(lang, "saveNote")}
               </button>
 
               <button type="button" onClick={resetForm} style={secondaryButtonStyle}>
-                Reset
+                {t(lang, "reset")}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDownloadPDF()}
+                style={secondaryButtonStyle}
+              >
+                {t(lang, "pdf")}
               </button>
             </div>
           </div>
@@ -905,12 +1099,12 @@ function App() {
               marginBottom: 16,
             }}
           >
-            <h2 style={{ margin: 0, fontSize: 20 }}>Saved Notes</h2>
+            <h2 style={{ margin: 0, fontSize: 20 }}>{t(lang, "savedNotes")}</h2>
 
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search saved notes..."
+              placeholder={t(lang, "searchSavedNotes")}
               style={{
                 ...inputStyle,
                 width: "min(360px, 100%)",
@@ -926,7 +1120,7 @@ function App() {
                 fontSize: 14,
               }}
             >
-              No saved notes found.
+              {t(lang, "noSavedNotes")}
             </div>
           ) : (
             <div
@@ -936,6 +1130,7 @@ function App() {
               }}
             >
               {filteredSavedNotes.map((note, index) => {
+                const visibleMainSelections = getVisibleMainSelections(note.mainSelections);
                 const visibleOuterSelections = getVisibleOuterSelections(note.secondarySelections);
 
                 return (
@@ -946,6 +1141,8 @@ function App() {
                       borderRadius: 18,
                       padding: 16,
                       background: "#fcfcfc",
+                      width: "100%",
+                      minWidth: 0,
                     }}
                   >
                     <div
@@ -966,12 +1163,13 @@ function App() {
                             marginBottom: 4,
                           }}
                         >
-                          {[note.country, note.farm].filter(Boolean).join(" / ") || "Untitled Note"}
+                          {[note.country, note.farm].filter(Boolean).join(" / ") ||
+                            t(lang, "untitledNote")}
                         </div>
 
                         {note.savedAt ? (
                           <div style={{ fontSize: 12, color: "#777" }}>
-                            Saved at: {formatSavedAt(note.savedAt)}
+                            {t(lang, "savedAt")}: {formatSavedAt(note.savedAt, note.lang || lang)}
                           </div>
                         ) : null}
                       </div>
@@ -988,21 +1186,21 @@ function App() {
                           onClick={() => handleEdit(note)}
                           style={smallButtonStyle}
                         >
-                          Edit
+                          {t(lang, "edit")}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(note)}
                           style={smallButtonStyle}
                         >
-                          Delete
+                          {t(lang, "delete")}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDownloadPDF(note)}
                           style={smallButtonStyle}
                         >
-                          PDF
+                          {t(lang, "pdf")}
                         </button>
                       </div>
                     </div>
@@ -1015,32 +1213,49 @@ function App() {
                         marginBottom: 12,
                       }}
                     >
-                      <InfoItem label="Country" value={note.country} />
-                      <InfoItem label="Farm" value={note.farm} />
-                      <InfoItem label="Roast Date" value={note.roastDate} />
-                      <InfoItem label="Variety" value={note.variety} />
-                      <InfoItem label="Dripper" value={note.dripper} />
-                      <InfoItem label="Roaster" value={note.roaster} />
+                      <InfoItem label={t(lang, "country")} value={note.country} />
+                      <InfoItem label={t(lang, "farm")} value={note.farm} />
+                      <InfoItem label={t(lang, "roastDate")} value={note.roastDate} />
+                      <InfoItem label={t(lang, "variety")} value={note.variety} />
+                      <InfoItem label={t(lang, "dripper")} value={note.dripper} />
+                      <InfoItem label={t(lang, "roaster")} value={note.roaster} />
                     </div>
 
                     {note.memo ? (
-                      <div style={{ marginBottom: 12 }}>
+                      <div
+                        style={{
+                          marginBottom: 12,
+                          width: "100%",
+                          minWidth: 0,
+                        }}
+                      >
                         <div style={sectionBodyStyle}>{note.memo}</div>
                       </div>
                     ) : null}
 
-                   {visibleOuterSelections.length > 0 ? (
-  <div style={{ marginBottom: 10 }}>
-    <div style={tagWrapStyle}>
-      {visibleOuterSelections.map((item, i) => (
-        <span key={`${item}-${i}`} style={tagStyle}>
-          {item}
-        </span>
-      ))}
-    </div>
-  </div>
-) : null}
+                    {visibleMainSelections.length > 0 ? (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={tagWrapStyle}>
+                          {visibleMainSelections.map((item, i) => (
+                            <span key={`${item}-${i}`} style={tagStyle}>
+                              {translateFlavor(item, lang)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
+                    {visibleOuterSelections.length > 0 ? (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={tagWrapStyle}>
+                          {visibleOuterSelections.map((item, i) => (
+                            <span key={`${item}-${i}`} style={tagStyle}>
+                              {translateFlavor(item, lang)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
@@ -1131,16 +1346,14 @@ const smallButtonStyle = {
   cursor: "pointer",
 };
 
-const sectionLabelStyle = {
-  fontSize: 12,
-  color: "#777",
-  marginBottom: 6,
-};
-
 const sectionBodyStyle = {
   fontSize: 14,
   lineHeight: 1.6,
   whiteSpace: "pre-wrap",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+  width: "100%",
+  minWidth: 0,
 };
 
 const tagWrapStyle = {

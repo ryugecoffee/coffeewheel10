@@ -266,6 +266,14 @@ export const wheelConstants = {
   secondaryOuterLabelRadius: 330,
 };
 
+export function normalizeWheelLabel(label = "") {
+  return String(label)
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
 export function polarToCartesian(cx, cy, r, angleDeg) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
   return {
@@ -291,7 +299,7 @@ export function arcPath(cx, cy, rInner, rOuter, startAngle, endAngle) {
 }
 
 export function buildMainWheelSegments() {
-  const noOuterBlockLabels = new Set([
+  const noOuterBlockLeafLabels = new Set([
     "BLACK TEA",
     "OLIVE OIL",
     "RAW",
@@ -332,6 +340,7 @@ export function buildMainWheelSegments() {
 
     ring1Segments.push({
       label: top.label,
+      normalizedLabel: normalizeWheelLabel(top.label),
       color: top.color,
       start: topStart,
       end: topEnd,
@@ -348,11 +357,13 @@ export function buildMainWheelSegments() {
 
       ring2Segments.push({
         label: mid.label,
+        normalizedLabel: normalizeWheelLabel(mid.label),
         color: mid.color,
         start: midStart,
         end: midEnd,
         outerRadius: wheelConstants.ring2Outer,
         parentTop: top.label,
+        parentTopNormalized: normalizeWheelLabel(top.label),
         hasOuterBlock,
       });
 
@@ -362,18 +373,21 @@ export function buildMainWheelSegments() {
       mid.children.forEach((leaf) => {
         const leafStart = leafAngle;
         const leafEnd = leafAngle + leafSpan;
+        const normalizedLeaf = normalizeWheelLabel(leaf);
 
-        if (hasOuterBlock) {
-          ring3Segments.push({
-            id: `${top.label}-${mid.label}-${leaf}`,
-            label: leaf,
-            color: mid.color,
-            start: leafStart,
-            end: leafEnd,
-            parentTop: top.label,
-            parentMid: mid.label,
-          });
-        }
+        ring3Segments.push({
+          id: `${top.label}-${mid.label}-${leaf}`,
+          label: leaf,
+          normalizedLabel: normalizedLeaf,
+          color: mid.color,
+          start: leafStart,
+          end: leafEnd,
+          parentTop: top.label,
+          parentTopNormalized: normalizeWheelLabel(top.label),
+          parentMid: mid.label,
+          parentMidNormalized: normalizeWheelLabel(mid.label),
+          drawBlock: hasOuterBlock && !noOuterBlockLeafLabels.has(normalizedLeaf),
+        });
 
         leafAngle += leafSpan;
       });
@@ -404,6 +418,7 @@ export function buildSecondaryWheelSegments() {
 
     secondaryTopSegments.push({
       label: top.label,
+      normalizedLabel: normalizeWheelLabel(top.label),
       color: top.color,
       start: secondaryStartAngle,
       end: secondaryEndAngle,
@@ -422,10 +437,12 @@ export function buildSecondaryWheelSegments() {
 
       secondaryMidSegments.push({
         label: mid.label,
+        normalizedLabel: normalizeWheelLabel(mid.label),
         color: mid.color,
         start: midStart,
         end: midEnd,
         parentTop: top.label,
+        parentTopNormalized: normalizeWheelLabel(top.label),
         hasInnerRing,
       });
 
@@ -438,11 +455,14 @@ export function buildSecondaryWheelSegments() {
 
           secondaryInnerSegments.push({
             label: inner.label,
+            normalizedLabel: normalizeWheelLabel(inner.label),
             color: inner.color || mid.color,
             start: innerStart,
             end: innerEnd,
             parentTop: top.label,
+            parentTopNormalized: normalizeWheelLabel(top.label),
             parentMid: mid.label,
+            parentMidNormalized: normalizeWheelLabel(mid.label),
           });
 
           const leaves =
@@ -460,12 +480,16 @@ export function buildSecondaryWheelSegments() {
               id: `${mid.label}-${inner.label}-${leaf}`,
               groupKey: `${mid.label}-${inner.label}`,
               label: leaf,
+              normalizedLabel: normalizeWheelLabel(leaf),
               color: inner.color || mid.color,
               start: leafStart,
               end: leafEnd,
               parentTop: top.label,
+              parentTopNormalized: normalizeWheelLabel(top.label),
               parentMid: mid.label,
+              parentMidNormalized: normalizeWheelLabel(mid.label),
               parentInner: inner.label,
+              parentInnerNormalized: normalizeWheelLabel(inner.label),
             });
           });
         });
@@ -481,12 +505,16 @@ export function buildSecondaryWheelSegments() {
             id: `${mid.label}-none-${leaf}`,
             groupKey: `${mid.label}-none`,
             label: leaf,
+            normalizedLabel: normalizeWheelLabel(leaf),
             color: mid.color,
             start: leafStart,
             end: leafEnd,
             parentTop: top.label,
+            parentTopNormalized: normalizeWheelLabel(top.label),
             parentMid: mid.label,
+            parentMidNormalized: normalizeWheelLabel(mid.label),
             parentInner: null,
+            parentInnerNormalized: null,
           });
         });
       }

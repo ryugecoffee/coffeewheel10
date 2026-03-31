@@ -7,6 +7,7 @@ import {
   wheelData,
 } from "./wheelGeometry";
 import secondaryWheelData from "./secondaryWheelData";
+import { translateFlavor } from "./flavorTranslations";
 
 const wheelDataMap = {
   main: wheelData,
@@ -37,6 +38,7 @@ function arraysEqual(a = [], b = []) {
 }
 
 function FlavorWheel({
+  lang = "en",
   mainSelections,
   setMainSelections,
   secondarySelections,
@@ -50,16 +52,14 @@ function FlavorWheel({
   const [secondarySelectedMids, setSecondarySelectedMids] = useState([]);
   const [screenSize, setScreenSize] = useState(window.innerWidth);
 
-useEffect(() => {
-  const handleResize = () => setScreenSize(window.innerWidth);
-  window.addEventListener("resize", handleResize);
-  return () => window.removeEventListener("resize", handleResize);
-}, []);
+  useEffect(() => {
+    const handleResize = () => setScreenSize(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-const wheelMaxWidth =
-  screenSize < 500 ? "100%" :   // iPhone
-  screenSize < 900 ? "80%" :    // iPad
-  "600px";                      // PC
+  const wheelMaxWidth =
+    screenSize < 500 ? "100%" : screenSize < 900 ? "80%" : "600px";
 
   const isSecondaryWheel = activeWheel === "secondary";
 
@@ -135,7 +135,7 @@ const wheelMaxWidth =
     return buildMainWheelSegments();
   }, [isSecondaryWheel, currentWheel, noOuterBlockLabels, ring2Outer]);
 
-      const {
+  const {
     secondaryTopSegments,
     secondaryMidSegments,
     secondaryInnerSegments,
@@ -253,6 +253,7 @@ const wheelMaxWidth =
       secondaryLeafSegments,
     };
   }, [secondaryStartAngle, secondaryEndAngle]);
+
   const secondaryWheelSelections = useMemo(() => {
     if (!Array.isArray(cupProfileSelections)) return [];
 
@@ -286,26 +287,26 @@ const wheelMaxWidth =
     return Array.from(grouped.values());
   }, [secondaryLeafSegments]);
 
-useEffect(() => {
-  if (!Array.isArray(cupProfileSelections)) return;
-  if (secondaryLeafSegments.length === 0) return;
+  useEffect(() => {
+    if (!Array.isArray(cupProfileSelections)) return;
+    if (secondaryLeafSegments.length === 0) return;
 
-  const matchedLeaves = secondaryLeafSegments.filter((leaf) =>
-    cupProfileSelections.includes(leaf.label)
-  );
+    const matchedLeaves = secondaryLeafSegments.filter((leaf) =>
+      cupProfileSelections.includes(leaf.label)
+    );
 
-  const nextSecondaryMids = Array.from(
-    new Set(
-      matchedLeaves.flatMap((leaf) =>
-        leaf.parentInner
-          ? [leaf.parentMid, leaf.parentInner]
-          : [leaf.parentMid]
+    const nextSecondaryMids = Array.from(
+      new Set(
+        matchedLeaves.flatMap((leaf) =>
+          leaf.parentInner
+            ? [leaf.parentMid, leaf.parentInner]
+            : [leaf.parentMid]
+        )
       )
-    )
-  );
+    );
 
-  setSecondarySelectedMids(nextSecondaryMids);
-}, [cupProfileSelections, secondaryLeafSegments]);
+    setSecondarySelectedMids(nextSecondaryMids);
+  }, [cupProfileSelections, secondaryLeafSegments]);
 
   useEffect(() => {
     if (!Array.isArray(mainSelections) || !Array.isArray(secondarySelections))
@@ -391,33 +392,19 @@ useEffect(() => {
     );
   };
 
- const handleInnerClick = (seg) => {
-  if (!isSecondaryWheel) return;
+  const handleInnerClick = (seg) => {
+    if (!isSecondaryWheel) return;
 
-  setSelectedMids((prev) => {
-    const siblingInnerLabels = secondaryInnerSegments
-      .filter((item) => item.parentMid === seg.parentMid)
-      .map((item) => item.label);
+    setSelectedMids((prev) => {
+      const siblingInnerLabels = secondaryInnerSegments
+        .filter((item) => item.parentMid === seg.parentMid)
+        .map((item) => item.label);
 
-    const next = prev.filter((v) => !siblingInnerLabels.includes(v));
+      const next = prev.filter((v) => !siblingInnerLabels.includes(v));
 
-    return [...new Set([...next, seg.parentMid, seg.label])];
-  });
-
- const handleInnerClick = (seg) => {
-  if (!isSecondaryWheel) return;
-
-  setSelectedMids((prev) => {
-    const siblingInnerLabels = secondaryInnerSegments
-      .filter((item) => item.parentMid === seg.parentMid)
-      .map((item) => item.label);
-
-    const next = prev.filter((v) => !siblingInnerLabels.includes(v));
-
-    return [...new Set([...next, seg.parentMid, seg.label])];
-  });
-};
-};
+      return [...new Set([...next, seg.parentMid, seg.label])];
+    });
+  };
 
   const handleMidClick = (seg) => {
     if (isSecondaryWheel) {
@@ -602,17 +589,17 @@ useEffect(() => {
     return secondaryWheelSelections.includes(seg.id) ? "#111111" : "#8d867b";
   };
 
-return (
-  <div
-    style={{
-      width: wheelMaxWidth,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: 20,
-      margin: "0 auto",
-    }}
-  >
+  return (
+    <div
+      style={{
+        width: wheelMaxWidth,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 20,
+        margin: "0 auto",
+      }}
+    >
       <div
         style={{
           width: "100%",
@@ -622,75 +609,81 @@ return (
           justifyContent: "center",
         }}
       >
-   <svg
-  viewBox="0 0 900 900"
-  style={{
-    width: "100%",
-    height: "100%",
-    display: "block",
-    background: "#e7e3dd",
-    borderRadius: 20,
-    transformOrigin: "center center",
-  }}
->
+        <svg
+          viewBox="0 0 900 900"
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+            background: "#e7e3dd",
+            borderRadius: 20,
+            transformOrigin: "center center",
+          }}
+        >
           {isSecondaryWheel ? (
             <>
-     {secondaryLeafBlockSegments.map((seg) => {
-  if (
-    seg.parentMid === "AROMA" ||
-    seg.parentMid === "AFTERTASTE"
-  ) {
-    return null;
-  }
+              {secondaryLeafBlockSegments.map((seg) => {
+                if (
+                  seg.parentMid === "AROMA" ||
+                  seg.parentMid === "AFTERTASTE"
+                ) {
+                  return null;
+                }
 
-  const isClickable = seg.parentInner
-    ? selectedMids.includes(seg.parentInner)
-    : selectedMids.includes(seg.parentMid);
+                const isClickable = seg.parentInner
+                  ? selectedMids.includes(seg.parentInner)
+                  : selectedMids.includes(seg.parentMid);
 
-  const isSelectedBlock = secondaryWheelSelections.some((id) => {
-    const leaf = secondaryLeafSegments.find((item) => item.id === id);
-    if (!leaf) return false;
+                const isSelectedBlock = secondaryWheelSelections.some((id) => {
+                  const leaf = secondaryLeafSegments.find((item) => item.id === id);
+                  if (!leaf) return false;
 
-    if (seg.parentInner) {
-      return leaf.parentInner === seg.parentInner;
-    }
+                  if (seg.parentInner) {
+                    return leaf.parentInner === seg.parentInner;
+                  }
 
-    return leaf.parentMid === seg.parentMid;
-  });
+                  return leaf.parentMid === seg.parentMid;
+                });
 
-  return (
-    <path
-      key={`sr4-${seg.groupKey}`}
-      d={arcPath(
-        cx,
-        cy,
-        secondaryRing3Inner,
-        secondaryRing3Outer,
-        seg.start,
-        seg.end
-      )}
-      fill={seg.color}
-      stroke="#e7e3dd"
-      strokeWidth="2.5"
-      opacity={isSelectedBlock ? 1 : selectedMids.includes(seg.parentMid) ? 0.45 : 0.18}
-      onClick={
-        isClickable
-          ? () => handleSecondaryLeafBlockClick(seg)
-          : undefined
-      }
-      style={{ cursor: isClickable ? "pointer" : "default" }}
-    />
-  );
-})}
+                return (
+                  <path
+                    key={`sr4-${seg.groupKey}`}
+                    d={arcPath(
+                      cx,
+                      cy,
+                      secondaryRing3Inner,
+                      secondaryRing3Outer,
+                      seg.start,
+                      seg.end
+                    )}
+                    fill={seg.color}
+                    stroke="#e7e3dd"
+                    strokeWidth="2.5"
+                    opacity={
+                      isSelectedBlock
+                        ? 1
+                        : selectedMids.includes(seg.parentMid)
+                          ? 0.45
+                          : 0.18
+                    }
+                    onClick={
+                      isClickable
+                        ? () => handleSecondaryLeafBlockClick(seg)
+                        : undefined
+                    }
+                    style={{ cursor: isClickable ? "pointer" : "default" }}
+                  />
+                );
+              })}
 
               {secondaryInnerSegments.map((seg) => {
                 const isClickable = selectedMids.includes(seg.parentMid);
                 const isSelected =
-  selectedMids.includes(seg.label) ||
-  secondaryWheelSelections.some((id) => {
-    const leaf = secondaryLeafSegments.find((item) => item.id === id);
-    return leaf ? leaf.parentInner === seg.label : false;
-  });
+                  selectedMids.includes(seg.label) ||
+                  secondaryWheelSelections.some((id) => {
+                    const leaf = secondaryLeafSegments.find((item) => item.id === id);
+                    return leaf ? leaf.parentInner === seg.label : false;
+                  });
 
                 return (
                   <path
@@ -758,7 +751,9 @@ return (
             </>
           ) : (
             <>
-              {ring3Segments.map((seg, index) => {
+              {ring3Segments
+  .filter((seg) => seg.drawBlock)
+  .map((seg, index) => {
                 const isClickable =
                   mainSelections.includes(seg.parentTop) &&
                   selectedMids.includes(seg.parentMid);
@@ -845,7 +840,7 @@ return (
                 letterSpacing: "0.5px",
               }}
             >
-              {activeWheel === "main" ? "MAIN" : "2ND"}
+              {translateFlavor(activeWheel === "main" ? "MAIN" : "2ND", lang)}
             </text>
             <text
               x={cx}
@@ -861,7 +856,7 @@ return (
                 letterSpacing: "1px",
               }}
             >
-              CLICK TO SWITCH
+              {translateFlavor("CLICK TO SWITCH", lang)}
             </text>
           </g>
 
@@ -870,7 +865,7 @@ return (
               const midAngle = (seg.start + seg.end) / 2;
               const pos = textPoint(cx, cy, 130, midAngle);
               const rotation = getTextRotation(midAngle);
-              const lines = seg.label.split("\n");
+              const lines = translateFlavor(seg.label, lang).split("\n");
 
               return (
                 <g
@@ -910,7 +905,7 @@ return (
               const textRadius = (ring2Inner + seg.outerRadius) / 2;
               const pos = textPoint(cx, cy, textRadius, midAngle);
               const rotation = getTextRotation(midAngle);
-              const lines = seg.label.split("\n");
+              const lines = translateFlavor(seg.label, lang).split("\n");
 
               return (
                 <g
@@ -965,7 +960,7 @@ return (
                     userSelect: "none",
                   }}
                 >
-                  {seg.label}
+                  {translateFlavor(seg.label, lang)}
                 </text>
               );
             })}
@@ -980,7 +975,8 @@ return (
               const arcEnd = polarToCartesian(cx, cy, textArcRadius, textEnd);
               const largeArcFlag = textEnd - textStart <= 180 ? 0 : 1;
 
-              const pathId = `cup-profile-arc-${seg.label}`;
+              const translatedLabel = translateFlavor(seg.label, lang);
+              const pathId = `cup-profile-arc-${seg.label.replace(/\s+/g, "-").toLowerCase()}`;
 
               return (
                 <g key={`st1-${seg.label}`}>
@@ -1006,7 +1002,7 @@ return (
                       textAnchor="middle"
                       dominantBaseline="middle"
                     >
-                      {seg.label}
+                      {translatedLabel}
                     </textPath>
                   </text>
                 </g>
@@ -1017,7 +1013,7 @@ return (
             secondaryMidSegments.map((seg) => {
               const midAngle = (seg.start + seg.end) / 2;
               const pos = textPoint(cx, cy, secondaryRing2TextRadius, midAngle);
-              const lines = seg.label.split("\n");
+              const lines = translateFlavor(seg.label, lang).split("\n");
               const rotation = midAngle > 180 ? midAngle + 180 : midAngle;
 
               return (
@@ -1053,28 +1049,32 @@ return (
               const midAngle = (seg.start + seg.end) / 2;
               const pos = textPoint(cx, cy, secondaryRing3TextRadius, midAngle);
               const rotation = midAngle > 180 ? midAngle + 180 : midAngle;
+              const lines = translateFlavor(seg.label, lang).split("\n");
 
               return (
                 <g
                   key={`st3-${seg.label}-${seg.parentMid}`}
                   transform={`translate(${pos.x} ${pos.y}) rotate(${rotation})`}
                 >
-                  <text
-                    x={0}
-                    y={0}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill="#ffffff"
-                    fontSize="10"
-                    fontWeight="700"
-                    style={{
-                      letterSpacing: "0.3px",
-                      pointerEvents: "none",
-                      userSelect: "none",
-                    }}
-                  >
-                    {seg.label}
-                  </text>
+                  {lines.map((line, i) => (
+                    <text
+                      key={i}
+                      x={0}
+                      y={i * 11 - ((lines.length - 1) * 11) / 2}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="#ffffff"
+                      fontSize="10"
+                      fontWeight="700"
+                      style={{
+                        letterSpacing: "0.3px",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                      }}
+                    >
+                      {line}
+                    </text>
+                  ))}
                 </g>
               );
             })}
@@ -1127,7 +1127,7 @@ return (
                       userSelect: "none",
                     }}
                   >
-                    {seg.label}
+                    {translateFlavor(seg.label, lang)}
                   </text>
                 </g>
               );
