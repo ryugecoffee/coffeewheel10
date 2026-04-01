@@ -4,26 +4,34 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
   Svg,
   G,
   Path,
   Circle,
+  Font,
 } from "@react-pdf/renderer";
-import NotoSansJP from "./fonts/NotoSansJP-VariableFont_wght.ttf";
 import { translateFlavor } from "./flavorTranslations";
 import { getPdfText } from "./pdfTranslations";
 import { buildMainWheelSegments } from "./wheelGeometry";
 
 Font.register({
   family: "NotoSansJP",
-  src: NotoSansJP,
+  fonts: [
+    {
+      src: "https://fonts.gstatic.com/ea/notosansjp/v5/NotoSansJP-Regular.woff",
+      fontWeight: "normal",
+    },
+    {
+      src: "https://fonts.gstatic.com/ea/notosansjp/v5/NotoSansJP-Bold.woff",
+      fontWeight: "bold",
+    },
+  ],
 });
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 28,
-    paddingBottom: 26,
+    paddingTop: 26,
+    paddingBottom: 24,
     paddingHorizontal: 24,
     fontSize: 10,
     color: "#222",
@@ -48,16 +56,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  topInfoLabel: {
-    fontSize: 7,
-    color: "#888",
-    marginBottom: 2,
-    textAlign: "center",
-  },
-
   topInfoValue: {
+    fontFamily: "NotoSansJP",
     fontSize: 16,
-    fontWeight: 500,
+    fontWeight: "bold",
     textAlign: "center",
   },
 
@@ -84,15 +86,18 @@ const styles = StyleSheet.create({
   },
 
   boxedLabel: {
+    fontFamily: "NotoSansJP",
     fontSize: 7,
-    color: "#888",
+    fontWeight: "bold",
+    color: "#777",
     marginBottom: 2,
     textAlign: "center",
   },
 
   boxedValue: {
+    fontFamily: "NotoSansJP",
     fontSize: 10,
-    fontWeight: 500,
+    fontWeight: "normal",
     textAlign: "center",
   },
 
@@ -104,14 +109,17 @@ const styles = StyleSheet.create({
   },
 
   memoLabel: {
+    fontFamily: "NotoSansJP",
     fontSize: 7,
-    color: "#888",
+    fontWeight: "bold",
+    color: "#777",
     marginBottom: 4,
     textAlign: "center",
   },
 
   memoValue: {
-    fontSize: 10,
+    fontFamily: "NotoSansJP",
+    fontSize: 9.5,
     lineHeight: 1.45,
     textAlign: "center",
   },
@@ -121,7 +129,9 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
+    fontFamily: "NotoSansJP",
     fontSize: 11,
+    fontWeight: "bold",
     marginBottom: 6,
     color: "#444",
   },
@@ -137,6 +147,7 @@ const styles = StyleSheet.create({
   },
 
   wheelEmptyText: {
+    fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#777",
     textAlign: "center",
@@ -161,23 +172,29 @@ const styles = StyleSheet.create({
   },
 
   chipText: {
+    fontFamily: "NotoSansJP",
     fontSize: 8,
     color: "#555",
     textAlign: "center",
   },
 
   emptyText: {
+    fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#777",
+    textAlign: "center",
   },
 
   savedAtLabel: {
+    fontFamily: "NotoSansJP",
     fontSize: 7,
-    color: "#888",
+    fontWeight: "bold",
+    color: "#777",
     marginBottom: 2,
   },
 
   savedAtValue: {
+    fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#555",
   },
@@ -191,18 +208,24 @@ const styles = StyleSheet.create({
   },
 
   footerMain: {
-    fontSize: 8,
-    color: "#999",
+    fontFamily: "NotoSansJP",
+    fontSize: 8.5,
+    color: "#8e8e8e",
     textAlign: "center",
   },
 
   footerSub: {
+    fontFamily: "NotoSansJP",
     fontSize: 6,
-    color: "#bbb",
+    color: "#b0b0b0",
     textAlign: "center",
     marginTop: 1,
   },
 });
+
+/* =========================
+   Utils
+========================= */
 
 function safeArray(value) {
   if (!Array.isArray(value)) return [];
@@ -332,10 +355,8 @@ function normalizeSegmentGeometry(seg, fallbackInnerR, fallbackOuterR) {
         : typeof seg?.end === "number"
         ? seg.end
         : null,
-    innerR:
-      typeof seg?.innerR === "number" ? seg.innerR : fallbackInnerR,
-    outerR:
-      typeof seg?.outerR === "number" ? seg.outerR : fallbackOuterR,
+    innerR: typeof seg?.innerR === "number" ? seg.innerR : fallbackInnerR,
+    outerR: typeof seg?.outerR === "number" ? seg.outerR : fallbackOuterR,
   };
 }
 
@@ -449,6 +470,10 @@ function normalizePdfData(props = {}) {
     ),
   };
 }
+
+/* =========================
+   Main Wheel
+========================= */
 
 function MainFlavorWheel({
   selectedMainLabels,
@@ -628,6 +653,10 @@ function ChipList({ items, emptyLabel, language }) {
     </View>
   );
 }
+
+/* =========================
+   Export
+========================= */
 
 export default function CoffeeFlavorWheelPDF(props) {
   const data = normalizePdfData(props);
