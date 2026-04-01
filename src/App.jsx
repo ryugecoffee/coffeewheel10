@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { pdf } from "@react-pdf/renderer";
 import FlavorWheel from "./FlavorWheel";
@@ -1276,10 +1277,10 @@ function App() {
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
-    a.href = url;
-    a.download = generatePdfFileName(note);
-    document.body.appendChild(a);
-    a.click();
+a.href = url;
+a.download = fileName;
+document.body.appendChild(a);
+a.click();
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
@@ -1351,7 +1352,8 @@ function App() {
     );
   };
 
-  return (
+return (
+  <>
     <div
       style={{
         minHeight: "100vh",
@@ -2095,7 +2097,10 @@ function App() {
           }
         }
       `}</style>
-    </div>
+        </div>
+
+    <Analytics />
+  </>
   );
 }
 
