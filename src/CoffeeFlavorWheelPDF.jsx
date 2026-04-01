@@ -22,159 +22,184 @@ Font.register({
 
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 18,
-    paddingBottom: 24,
+    paddingTop: 28,
+    paddingBottom: 26,
     paddingHorizontal: 24,
-    fontSize: 9,
+    fontSize: 10,
+    color: "#222",
+    backgroundColor: "#fff",
     fontFamily: "NotoSansJP",
-    color: "#111111",
-    lineHeight: 1.2,
-    backgroundColor: "#ffffff",
   },
 
-  topSection: {
-    marginBottom: 8,
+  infoSection: {
+    marginBottom: 14,
   },
 
-  titleRow: {
+  topInfoRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    columnGap: 48,
+    marginBottom: 10,
+  },
+
+  topInfoBlock: {
+    minWidth: 140,
+    alignItems: "center",
+  },
+
+  topInfoLabel: {
+    fontSize: 7,
+    color: "#888",
+    marginBottom: 2,
+    textAlign: "center",
+  },
+
+  topInfoValue: {
+    fontSize: 16,
+    fontWeight: 500,
+    textAlign: "center",
+  },
+
+  infoCard: {
+    borderWidth: 1,
+    borderColor: "#d9d6d0",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+
+  infoCardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginBottom: 8,
+    alignItems: "flex-start",
   },
 
-  titleBlockLeft: {
-    width: "48.5%",
+  boxedItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
   },
 
-  titleBlockRight: {
-    width: "48.5%",
-  },
-
-  titleLabel: {
+  boxedLabel: {
     fontSize: 7,
-    color: "#888888",
-    marginBottom: 1,
+    color: "#888",
+    marginBottom: 2,
+    textAlign: "center",
   },
 
-  titleValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111111",
+  boxedValue: {
+    fontSize: 10,
+    fontWeight: 500,
+    textAlign: "center",
   },
 
-  infoGridRow: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginBottom: 8,
-  gap: 10,
-},
-
-infoGridBox: {
-  width: "48.5%",
-  paddingTop: 4,
-  paddingBottom: 4,
-},
-
-  infoLabel: {
-  fontSize: 7.5,
-  color: "#777777",
-  marginBottom: 3,
-},
-
-infoValue: {
-  fontSize: 10,
-  color: "#111111",
-},
-
-  memoRow: {
-    marginBottom: 8,
+  memoDivider: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e1da",
   },
 
-  memoBox: {
-    borderWidth: 1,
-    borderColor: "#e2e2e2",
-    borderRadius: 8,
-    paddingTop: 6,
-    paddingBottom: 6,
-    paddingHorizontal: 8,
-    minHeight: 34,
+  memoLabel: {
+    fontSize: 7,
+    color: "#888",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+
+  memoValue: {
+    fontSize: 10,
+    lineHeight: 1.45,
+    textAlign: "center",
   },
 
   section: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
 
   sectionTitle: {
     fontSize: 11,
-    fontWeight: "bold",
     marginBottom: 6,
-    paddingBottom: 3,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    color: "#444",
   },
 
   wheelCard: {
     borderWidth: 1,
-    borderColor: "#ddd8d0",
-    borderRadius: 14,
+    borderColor: "#e5e1da",
+    borderRadius: 10,
     backgroundColor: "#f5f2ed",
-    paddingTop: 8,
-    paddingBottom: 8,
-    paddingHorizontal: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     alignItems: "center",
   },
 
   wheelEmptyText: {
-    marginTop: 6,
     fontSize: 9,
-    color: "#8a8a8a",
+    color: "#777",
     textAlign: "center",
+    marginTop: 8,
   },
 
   chipWrap: {
+    marginTop: 8,
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 6,
+    justifyContent: "center",
+    gap: 6,
   },
 
   chip: {
     borderWidth: 1,
-    borderColor: "#d0d0d0",
-    borderRadius: 20,
-    paddingTop: 3,
-    paddingBottom: 3,
-    paddingHorizontal: 7,
-    marginRight: 5,
-    marginBottom: 5,
-    backgroundColor: "#fafafa",
+    borderColor: "#d8d3cb",
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    backgroundColor: "#fff",
   },
 
   chipText: {
     fontSize: 8,
+    color: "#555",
+    textAlign: "center",
   },
 
   emptyText: {
     fontSize: 9,
-    color: "#777777",
+    color: "#777",
+  },
+
+  savedAtLabel: {
+    fontSize: 7,
+    color: "#888",
+    marginBottom: 2,
+  },
+
+  savedAtValue: {
+    fontSize: 9,
+    color: "#555",
   },
 
   footer: {
     position: "absolute",
     left: 24,
     right: 24,
-    bottom: 12,
+    bottom: 16,
     alignItems: "center",
   },
 
   footerMain: {
-    fontSize: 10,
-    color: "#8c8c8c",
+    fontSize: 8,
+    color: "#999",
+    textAlign: "center",
   },
 
   footerSub: {
-    fontSize: 7,
-    color: "#a0a0a0",
+    fontSize: 6,
+    color: "#bbb",
+    textAlign: "center",
     marginTop: 1,
   },
 });
@@ -315,7 +340,9 @@ function normalizeSegmentGeometry(seg, fallbackInnerR, fallbackOuterR) {
 }
 
 function normalizeWheelGeometry(rawWheel) {
-  if (!rawWheel) return { ring1Segments: [], ring2Segments: [], ring3Segments: [] };
+  if (!rawWheel) {
+    return { ring1Segments: [], ring2Segments: [], ring3Segments: [] };
+  }
 
   const ring1Segments = safeArray(rawWheel.ring1Segments).map((seg) =>
     normalizeSegmentGeometry(seg, 62, 118)
@@ -325,13 +352,13 @@ function normalizeWheelGeometry(rawWheel) {
     normalizeSegmentGeometry(seg, 119, 172)
   );
 
- const ring3Segments = safeArray(rawWheel.ring3Segments).map((seg) =>
-  normalizeSegmentGeometry(
-    seg,
-    typeof seg?.innerR === "number" ? seg.innerR : 173,
-    typeof seg?.outerR === "number" ? seg.outerR : 185
-  )
-);
+  const ring3Segments = safeArray(rawWheel.ring3Segments).map((seg) =>
+    normalizeSegmentGeometry(
+      seg,
+      typeof seg?.innerR === "number" ? seg.innerR : 173,
+      typeof seg?.outerR === "number" ? seg.outerR : 185
+    )
+  );
 
   return {
     ring1Segments: ring1Segments.filter(
@@ -454,17 +481,17 @@ function MainFlavorWheel({
     ring2Segments.length > 0 ||
     ring3Segments.length > 0;
 
-    const selectedLeafParentMidSet = new Set(
-  ring3Segments
-    .filter((seg) => selectedLeafSet.has(normalizeLabel(seg.label)))
-    .map((seg) => normalizeLabel(seg.parentMid))
-);
+  const selectedLeafParentMidSet = new Set(
+    ring3Segments
+      .filter((seg) => selectedLeafSet.has(normalizeLabel(seg.label)))
+      .map((seg) => normalizeLabel(seg.parentMid))
+  );
 
-const selectedLeafParentTopSet = new Set(
-  ring3Segments
-    .filter((seg) => selectedLeafSet.has(normalizeLabel(seg.label)))
-    .map((seg) => normalizeLabel(seg.parentTop))
-);
+  const selectedLeafParentTopSet = new Set(
+    ring3Segments
+      .filter((seg) => selectedLeafSet.has(normalizeLabel(seg.label)))
+      .map((seg) => normalizeLabel(seg.parentTop))
+  );
 
   const hasSelection =
     selectedMainSet.size > 0 ||
@@ -480,32 +507,33 @@ const selectedLeafParentTopSet = new Set(
     );
   }
 
- const getFill = (seg, ringType) => {
-  const normalized = normalizeLabel(seg.label);
-  const baseColor = seg.color || "#cccccc";
+  const getFill = (seg, ringType) => {
+    const normalized = normalizeLabel(seg.label);
+    const baseColor = seg.color || "#cccccc";
 
-  let isSelected = false;
+    let isSelected = false;
 
-  if (ringType === "ring1") {
-    isSelected =
-      selectedMainSet.has(normalized) ||
-      mergedSet.has(normalized) ||
-      selectedLeafParentTopSet.has(normalized);
-  } else if (ringType === "ring2") {
-    isSelected =
-      selectedMiddleSet.has(normalized) ||
-      mergedSet.has(normalized) ||
-      selectedLeafParentMidSet.has(normalized);
-  } else {
-    isSelected = selectedLeafSet.has(normalized) || mergedSet.has(normalized);
-  }
+    if (ringType === "ring1") {
+      isSelected =
+        selectedMainSet.has(normalized) ||
+        mergedSet.has(normalized) ||
+        selectedLeafParentTopSet.has(normalized);
+    } else if (ringType === "ring2") {
+      isSelected =
+        selectedMiddleSet.has(normalized) ||
+        mergedSet.has(normalized) ||
+        selectedLeafParentMidSet.has(normalized);
+    } else {
+      isSelected =
+        selectedLeafSet.has(normalized) || mergedSet.has(normalized);
+    }
 
-  if (!hasSelection) {
-    return blendHex(baseColor, "#f5f2ed", 0.84);
-  }
+    if (!hasSelection) {
+      return blendHex(baseColor, "#f5f2ed", 0.84);
+    }
 
-  return isSelected ? baseColor : blendHex(baseColor, "#f5f2ed", 0.84);
-};
+    return isSelected ? baseColor : blendHex(baseColor, "#f5f2ed", 0.84);
+  };
 
   return (
     <View style={styles.wheelCard}>
@@ -546,23 +574,23 @@ const selectedLeafParentTopSet = new Set(
           ))}
 
           {ring3Segments
-  .filter((seg) => seg.drawBlock)
-  .map((seg, index) => (
-    <Path
-      key={`ring3-${seg.label || "segment"}-${index}`}
-      d={donutPath(
-        210,
-        210,
-        seg.innerR,
-        seg.outerR,
-        seg.startAngle,
-        seg.endAngle
-      )}
-      fill={getFill(seg, "ring3")}
-      stroke="#f5f2ed"
-      strokeWidth={0.9}
-    />
-  ))}
+            .filter((seg) => seg.drawBlock)
+            .map((seg, index) => (
+              <Path
+                key={`ring3-${seg.label || "segment"}-${index}`}
+                d={donutPath(
+                  210,
+                  210,
+                  seg.innerR,
+                  seg.outerR,
+                  seg.startAngle,
+                  seg.endAngle
+                )}
+                fill={getFill(seg, "ring3")}
+                stroke="#f5f2ed"
+                strokeWidth={0.9}
+              />
+            ))}
 
           <Circle cx="210" cy="210" r="44" fill="#f5f2ed" />
         </G>
@@ -579,19 +607,6 @@ const selectedLeafParentTopSet = new Set(
           ))}
         </View>
       )}
-    </View>
-  );
-}
-
-function InfoGridRow({ items }) {
-  return (
-    <View style={styles.infoGridRow}>
-      {items.map((item, index) => (
-        <View key={`${item.label}-${index}`} style={styles.infoGridBox}>
-          <Text style={styles.infoLabel}>{item.label}</Text>
-          <Text style={styles.infoValue}>{safeText(item.value)}</Text>
-        </View>
-      ))}
     </View>
   );
 }
@@ -621,37 +636,57 @@ export default function CoffeeFlavorWheelPDF(props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.topSection}>
-          <View style={styles.titleRow}>
-            <View style={styles.titleBlockLeft}>
-              <Text style={styles.titleLabel}>{t.country}</Text>
-              <Text style={styles.titleValue}>{safeText(data.country, t.noData)}</Text>
+        <View style={styles.infoSection}>
+          <View style={styles.topInfoRow}>
+            <View style={styles.topInfoBlock}>
+              <Text style={styles.topInfoValue}>
+                {safeText(data.country, t.noData)}
+              </Text>
             </View>
 
-            <View style={styles.titleBlockRight}>
-              <Text style={styles.titleLabel}>{t.farm}</Text>
-              <Text style={styles.titleValue}>{safeText(data.farm, t.noData)}</Text>
+            <View style={styles.topInfoBlock}>
+              <Text style={styles.topInfoValue}>
+                {safeText(data.farm, t.noData)}
+              </Text>
             </View>
           </View>
 
-          <InfoGridRow
-  items={[
-    { label: t.roastDate, value: data.roastDate || t.noData },
-    { label: t.variety, value: data.variety || t.noData },
-  ]}
-/>
+          <View style={styles.infoCard}>
+            <View style={styles.infoCardRow}>
+              <View style={styles.boxedItem}>
+                <Text style={styles.boxedLabel}>{t.variety}</Text>
+                <Text style={styles.boxedValue}>
+                  {safeText(data.variety, t.noData)}
+                </Text>
+              </View>
 
-<InfoGridRow
-  items={[
-    { label: t.dripper, value: data.dripper || t.noData },
-    { label: t.roaster, value: data.roaster || t.noData },
-  ]}
-/>
+              <View style={styles.boxedItem}>
+                <Text style={styles.boxedLabel}>{t.roastDate}</Text>
+                <Text style={styles.boxedValue}>
+                  {safeText(data.roastDate, t.noData)}
+                </Text>
+              </View>
 
-          <View style={styles.memoRow}>
-            <Text style={styles.infoLabel}>{t.memo}</Text>
-            <View style={styles.memoBox}>
-              <Text>{safeText(data.memo, t.noMemo)}</Text>
+              <View style={styles.boxedItem}>
+                <Text style={styles.boxedLabel}>{t.roaster}</Text>
+                <Text style={styles.boxedValue}>
+                  {safeText(data.roaster, t.noData)}
+                </Text>
+              </View>
+
+              <View style={styles.boxedItem}>
+                <Text style={styles.boxedLabel}>{t.dripper}</Text>
+                <Text style={styles.boxedValue}>
+                  {safeText(data.dripper, t.noData)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.memoDivider}>
+              <Text style={styles.memoLabel}>{t.memo}</Text>
+              <Text style={styles.memoValue}>
+                {safeText(data.memo, t.noMemo)}
+              </Text>
             </View>
           </View>
         </View>
@@ -680,8 +715,8 @@ export default function CoffeeFlavorWheelPDF(props) {
 
         {data.savedAt ? (
           <View style={styles.section}>
-            <Text style={styles.infoLabel}>{t.savedAt}</Text>
-            <Text style={styles.infoValue}>
+            <Text style={styles.savedAtLabel}>{t.savedAt}</Text>
+            <Text style={styles.savedAtValue}>
               {formatDateValue(data.savedAt, data.language)}
             </Text>
           </View>
