@@ -20,6 +20,18 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
+function generatePdfFileName(note) {
+  const country = note.country || "Unknown";
+  const farm = note.farm || "Farm";
+
+  const date = new Date();
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+
+  return `${country}_${farm}_${yyyy}-${mm}-${dd}.pdf`;
+}
+
 const CURRENT_NOTE_KEY = "coffee-note-current";
 const SAVED_NOTES_KEY = "coffee-note-saved";
 const FARM_HISTORY_KEY = "coffee-note-farm-history";
@@ -1265,7 +1277,7 @@ function App() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = fileName;
+    a.download = generatePdfFileName(note);
     document.body.appendChild(a);
     a.click();
 
