@@ -1,4 +1,10 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
+import NotoSansJPRegular from "./fonts/NotoSansJP-Regular.ttf";
+
+Font.register({
+  family: "NotoSansJP",
+  src: NotoSansJPRegular,
+});
 
 const styles = StyleSheet.create({
   page: {
@@ -6,12 +12,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 12,
     color: "#222",
+    fontFamily: "NotoSansJP",
   },
 
   title: {
     fontSize: 26,
     marginBottom: 24,
-    fontWeight: "700",
+    fontWeight: 700,
+    fontFamily: "NotoSansJP",
   },
 
   section: {
@@ -30,15 +38,17 @@ const styles = StyleSheet.create({
     color: "#888",
     marginBottom: 4,
     letterSpacing: 1,
+    fontFamily: "NotoSansJP",
   },
 
   value: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: 600,
+    fontFamily: "NotoSansJP",
   },
 });
 
-export default function FlavorNotePDF({ note = {} }) {
+export default function FlavorNotePDF({ note }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
