@@ -1,3 +1,4 @@
+import NotoSansJPRegular from "./fonts/NotoSansJP-Regular.ttf";
 import {
   Document,
   Page,
@@ -16,16 +17,7 @@ import { buildMainWheelSegments } from "./wheelGeometry";
 
 Font.register({
   family: "NotoSansJP",
-  fonts: [
-    {
-      src: "https://fonts.gstatic.com/ea/notosansjp/v5/NotoSansJP-Regular.woff",
-      fontWeight: "normal",
-    },
-    {
-      src: "https://fonts.gstatic.com/ea/notosansjp/v5/NotoSansJP-Bold.woff",
-      fontWeight: "bold",
-    },
-  ],
+  src: NotoSansJPRegular,
 });
 
 const styles = StyleSheet.create({
