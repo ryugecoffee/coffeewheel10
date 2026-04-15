@@ -1,4 +1,3 @@
-import NotoSansJPRegular from "./fonts/NotoSansJP-Regular.ttf";
 import {
   Document,
   Page,
@@ -9,16 +8,10 @@ import {
   G,
   Path,
   Circle,
-  Font,
 } from "@react-pdf/renderer";
 import { translateFlavor } from "./flavorTranslations";
 import { getPdfText } from "./pdfTranslations";
 import { buildMainWheelSegments } from "./wheelGeometry";
-
-Font.register({
-  family: "NotoSansJP",
-  src: NotoSansJPRegular,
-});
 
 const styles = StyleSheet.create({
   page: {
@@ -28,7 +21,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#222",
     backgroundColor: "#fff",
-    fontFamily: "NotoSansJP",
   },
 
   infoSection: {
@@ -49,7 +41,6 @@ const styles = StyleSheet.create({
   },
 
   topInfoValue: {
-    fontFamily: "NotoSansJP",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
@@ -78,7 +69,6 @@ const styles = StyleSheet.create({
   },
 
   boxedLabel: {
-    fontFamily: "NotoSansJP",
     fontSize: 7,
     fontWeight: "bold",
     color: "#777",
@@ -87,7 +77,6 @@ const styles = StyleSheet.create({
   },
 
   boxedValue: {
-    fontFamily: "NotoSansJP",
     fontSize: 10,
     fontWeight: "normal",
     textAlign: "center",
@@ -101,7 +90,6 @@ const styles = StyleSheet.create({
   },
 
   memoLabel: {
-    fontFamily: "NotoSansJP",
     fontSize: 7,
     fontWeight: "bold",
     color: "#777",
@@ -110,7 +98,6 @@ const styles = StyleSheet.create({
   },
 
   memoValue: {
-    fontFamily: "NotoSansJP",
     fontSize: 9.5,
     lineHeight: 1.45,
     textAlign: "center",
@@ -121,7 +108,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontFamily: "NotoSansJP",
     fontSize: 11,
     fontWeight: "bold",
     marginBottom: 6,
@@ -139,7 +125,6 @@ const styles = StyleSheet.create({
   },
 
   wheelEmptyText: {
-    fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#777",
     textAlign: "center",
@@ -164,21 +149,18 @@ const styles = StyleSheet.create({
   },
 
   chipText: {
-    fontFamily: "NotoSansJP",
     fontSize: 8,
     color: "#555",
     textAlign: "center",
   },
 
   emptyText: {
-    fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#777",
     textAlign: "center",
   },
 
   savedAtLabel: {
-    fontFamily: "NotoSansJP",
     fontSize: 7,
     fontWeight: "bold",
     color: "#777",
@@ -186,7 +168,6 @@ const styles = StyleSheet.create({
   },
 
   savedAtValue: {
-    fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#555",
   },
@@ -200,14 +181,12 @@ const styles = StyleSheet.create({
   },
 
   footerMain: {
-    fontFamily: "NotoSansJP",
     fontSize: 8.5,
     color: "#8e8e8e",
     textAlign: "center",
   },
 
   footerSub: {
-    fontFamily: "NotoSansJP",
     fontSize: 6,
     color: "#b0b0b0",
     textAlign: "center",
