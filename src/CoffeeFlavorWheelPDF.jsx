@@ -1,4 +1,8 @@
-import NotoSansJPRegular from "./fonts/NotoSansJP-Regular.otf";
+Font.register({
+  family: "NotoSansJP",
+  src: "/fonts/NotoSansJP-Regular.ttf",
+});
+
 import {
   Document,
   Page,
