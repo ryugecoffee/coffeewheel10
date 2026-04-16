@@ -12,7 +12,11 @@ import {
 } from "@react-pdf/renderer";
 import { translateFlavor } from "./flavorTranslations";
 import { getPdfText } from "./pdfTranslations";
-import { buildMainWheelSegments } from "./wheelGeometry";
+import {
+  buildMainWheelSegments,
+  wheelConstants,
+  arcPath,
+} from "./wheelGeometry";
 
 Font.register({
   family: "NotoSansJP",
@@ -29,11 +33,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontFamily: "NotoSansJP",
   },
-
-  infoSection: {
-    marginBottom: 14,
-  },
-
   topInfoRow: {
     flexDirection: "row",
     justifyContent: "center",
@@ -41,19 +40,16 @@ const styles = StyleSheet.create({
     columnGap: 48,
     marginBottom: 10,
   },
-
   topInfoBlock: {
     minWidth: 140,
     alignItems: "center",
   },
-
   topInfoValue: {
     fontFamily: "NotoSansJP",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
   },
-
   infoCard: {
     borderWidth: 1,
     borderColor: "#d9d6d0",
@@ -62,20 +58,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     marginBottom: 14,
   },
-
   infoCardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
   },
-
   boxedItem: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
   },
-
   boxedLabel: {
     fontFamily: "NotoSansJP",
     fontSize: 7,
@@ -84,20 +77,17 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     textAlign: "center",
   },
-
   boxedValue: {
     fontFamily: "NotoSansJP",
     fontSize: 10,
     textAlign: "center",
   },
-
   memoDivider: {
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#e5e1da",
   },
-
   memoLabel: {
     fontFamily: "NotoSansJP",
     fontSize: 7,
@@ -106,18 +96,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: "center",
   },
-
   memoValue: {
     fontFamily: "NotoSansJP",
     fontSize: 9.5,
     lineHeight: 1.45,
     textAlign: "center",
   },
-
   section: {
     marginBottom: 12,
   },
-
   sectionTitle: {
     fontFamily: "NotoSansJP",
     fontSize: 11,
@@ -125,7 +112,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     color: "#444",
   },
-
   wheelCard: {
     borderWidth: 1,
     borderColor: "#e5e1da",
@@ -135,15 +121,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     alignItems: "center",
   },
-
-  wheelEmptyText: {
-    fontFamily: "NotoSansJP",
-    fontSize: 9,
-    color: "#777",
-    textAlign: "center",
-    marginTop: 8,
-  },
-
   chipWrap: {
     marginTop: 8,
     flexDirection: "row",
@@ -151,7 +128,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-
   chip: {
     borderWidth: 1,
     borderColor: "#d8d3cb",
@@ -160,21 +136,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     backgroundColor: "#fff",
   },
-
   chipText: {
     fontFamily: "NotoSansJP",
     fontSize: 8,
     color: "#555",
     textAlign: "center",
   },
-
-  emptyText: {
-    fontFamily: "NotoSansJP",
-    fontSize: 9,
-    color: "#777",
-    textAlign: "center",
-  },
-
   savedAtLabel: {
     fontFamily: "NotoSansJP",
     fontSize: 7,
@@ -182,13 +149,11 @@ const styles = StyleSheet.create({
     color: "#777",
     marginBottom: 2,
   },
-
   savedAtValue: {
     fontFamily: "NotoSansJP",
     fontSize: 9,
     color: "#555",
   },
-
   footer: {
     position: "absolute",
     left: 24,
@@ -196,20 +161,11 @@ const styles = StyleSheet.create({
     bottom: 16,
     alignItems: "center",
   },
-
   footerMain: {
     fontFamily: "NotoSansJP",
     fontSize: 8.5,
     color: "#8e8e8e",
     textAlign: "center",
-  },
-
-  footerSub: {
-    fontFamily: "NotoSansJP",
-    fontSize: 6,
-    color: "#b0b0b0",
-    textAlign: "center",
-    marginTop: 1,
   },
 });
 
@@ -232,7 +188,7 @@ function uniqueArray(items = []) {
   return [...new Set(safeArray(items))];
 }
 
-function normalizeLabel(label) {
+function normalizeLabelPdf(label) {
   return String(label || "")
     .replace(/\n/g, " ")
     .replace(/\s+/g, " ")
@@ -253,37 +209,26 @@ function formatDateValue(value, language = "en") {
   }
 }
 
-function renderTranslatedList(items, language) {
-  return [...new Set(items || [])].map((item) =>
-    translateFlavor(item, language)
-  );
-}
-
 /* =========================
-   Export
+   Wheel SVG
 ========================= */
 
 function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
   const { ring1Segments, ring2Segments, ring3Segments } = buildMainWheelSegments();
   const { cx, cy, ring1Inner, ring1Outer, ring2Inner, ring2Outer, ring3Inner, ring3Outer } = wheelConstants;
 
-  const normalizeLabel = (label) =>
-    String(label || "").replace(/\n/g, " ").replace(/\s+/g, " ").trim().toUpperCase();
-
   const selectedSet = new Set([
-    ...mainSelections.map(normalizeLabel),
-    ...secondarySelections.map(normalizeLabel),
+    ...mainSelections.map(normalizeLabelPdf),
+    ...secondarySelections.map(normalizeLabelPdf),
   ]);
 
-  const isSelected = (label) => selectedSet.has(normalizeLabel(label));
+  const isSelected = (label) => selectedSet.has(normalizeLabelPdf(label));
 
-  const scale = 0.55;
-  const svgSize = 900 * scale;
+  const svgSize = 495;
 
   return (
     <Svg width={svgSize} height={svgSize} viewBox="0 0 900 900">
       <G>
-        {/* Ring1 */}
         {ring1Segments.map((seg, i) => (
           <Path
             key={`r1-${i}`}
@@ -293,8 +238,6 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
             strokeWidth={1}
           />
         ))}
-
-        {/* Ring2 */}
         {ring2Segments.map((seg, i) => (
           <Path
             key={`r2-${i}`}
@@ -304,8 +247,6 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
             strokeWidth={1}
           />
         ))}
-
-        {/* Ring3 */}
         {ring3Segments.map((seg, i) => (
           <Path
             key={`r3-${i}`}
@@ -315,13 +256,15 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
             strokeWidth={0.5}
           />
         ))}
-
-        {/* 中心円 */}
         <Circle cx={cx} cy={cy} r={ring1Inner} fill="#f5f2ed" />
       </G>
     </Svg>
   );
 }
+
+/* =========================
+   Export
+========================= */
 
 export default function CoffeeFlavorWheelPDF(props) {
   const t = getPdfText(props.language || "en");
@@ -338,14 +281,13 @@ export default function CoffeeFlavorWheelPDF(props) {
     ...selectedLeafLabels,
   ]);
 
-  const mainSelections = safeArray(props.note?.mainSelections || props.mainSelections);
-  const secondarySelections = safeArray(props.note?.secondarySelections || props.secondarySelections);
+  const mainSelections = safeArray(props.note?.mainSelections ?? props.mainSelections);
+  const secondarySelections = safeArray(props.note?.secondarySelections ?? props.secondarySelections);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
 
-        {/* タイトル */}
         <View style={styles.topInfoRow}>
           <View style={styles.topInfoBlock}>
             <Text style={styles.topInfoValue}>{safeText(props.country)}</Text>
@@ -357,7 +299,6 @@ export default function CoffeeFlavorWheelPDF(props) {
           </View>
         </View>
 
-        {/* 詳細情報 */}
         <View style={styles.infoCard}>
           <View style={styles.infoCardRow}>
             <View style={styles.boxedItem}>
@@ -385,7 +326,6 @@ export default function CoffeeFlavorWheelPDF(props) {
           ) : null}
         </View>
 
-        {/* フレーバーホイール */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t.flavorNotes || "Flavor Notes"}</Text>
           <View style={styles.wheelCard}>
@@ -396,7 +336,6 @@ export default function CoffeeFlavorWheelPDF(props) {
           </View>
         </View>
 
-        {/* フレーバーチップ */}
         {allFlavors.length > 0 ? (
           <View style={styles.chipWrap}>
             {allFlavors.map((item, i) => (
@@ -407,7 +346,6 @@ export default function CoffeeFlavorWheelPDF(props) {
           </View>
         ) : null}
 
-        {/* 保存日時 */}
         {props.savedAt ? (
           <View style={{ marginTop: 10 }}>
             <Text style={styles.savedAtLabel}>{t.savedAt || "Saved at"}</Text>
@@ -415,7 +353,6 @@ export default function CoffeeFlavorWheelPDF(props) {
           </View>
         ) : null}
 
-        {/* フッター */}
         <View style={styles.footer}>
           <Text style={styles.footerMain}>flavorcoffeewheel.com</Text>
         </View>
