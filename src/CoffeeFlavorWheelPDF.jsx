@@ -265,12 +265,121 @@ function renderTranslatedList(items, language) {
 
 export default function CoffeeFlavorWheelPDF(props) {
   const t = getPdfText(props.language || "en");
+  const lang = props.language || "en";
+
+  const selectedMainLabels = safeArray(props.selectedMainLabels);
+  const selectedMiddleLabels = safeArray(props.selectedMiddleLabels);
+  const selectedLeafLabels = safeArray(props.selectedLeafLabels);
+  const cupProfile = safeArray(props.cupProfile);
+
+  const allFlavors = uniqueArray([
+    ...selectedMainLabels,
+    ...selectedMiddleLabels,
+    ...selectedLeafLabels,
+  ]);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.sectionTitle}>{t.flavorNotes}</Text>
-        <Text>{props.note?.country}</Text>
+
+        {/* タイトル行 */}
+        <View style={styles.topInfoRow}>
+          <View style={styles.topInfoBlock}>
+            <Text style={styles.topInfoValue}>
+              {safeText(props.country)}
+            </Text>
+            <Text style={{ fontSize: 8, color: "#888", marginTop: 2 }}>
+              {t.country || "Country"}
+            </Text>
+          </View>
+          <View style={styles.topInfoBlock}>
+            <Text style={styles.topInfoValue}>
+              {safeText(props.farm)}
+            </Text>
+            <Text style={{ fontSize: 8, color: "#888", marginTop: 2 }}>
+              {t.farm || "Farm"}
+            </Text>
+          </View>
+        </View>
+
+        {/* 詳細情報カード */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoCardRow}>
+            <View style={styles.boxedItem}>
+              <Text style={styles.boxedLabel}>{t.roastDate || "Roast Date"}</Text>
+              <Text style={styles.boxedValue}>{safeText(props.roastDate)}</Text>
+            </View>
+            <View style={styles.boxedItem}>
+              <Text style={styles.boxedLabel}>{t.variety || "Variety"}</Text>
+              <Text style={styles.boxedValue}>{safeText(props.variety)}</Text>
+            </View>
+            <View style={styles.boxedItem}>
+              <Text style={styles.boxedLabel}>{t.dripper || "Dripper"}</Text>
+              <Text style={styles.boxedValue}>{safeText(props.dripper)}</Text>
+            </View>
+            <View style={styles.boxedItem}>
+              <Text style={styles.boxedLabel}>{t.roaster || "Roaster"}</Text>
+              <Text style={styles.boxedValue}>{safeText(props.roaster)}</Text>
+            </View>
+          </View>
+
+          {props.memo ? (
+            <View style={styles.memoDivider}>
+              <Text style={styles.memoLabel}>{t.memo || "Memo"}</Text>
+              <Text style={styles.memoValue}>{props.memo}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        {/* フレーバーノート */}
+        {allFlavors.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t.flavorNotes || "Flavor Notes"}</Text>
+            <View style={styles.wheelCard}>
+              <View style={styles.chipWrap}>
+                {allFlavors.map((item, i) => (
+                  <View key={i} style={styles.chip}>
+                    <Text style={styles.chipText}>
+                      {translateFlavor(item, lang)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        ) : null}
+
+        {/* カッププロファイル */}
+        {cupProfile.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t.cupProfile || "Cup Profile"}</Text>
+            <View style={styles.wheelCard}>
+              <View style={styles.chipWrap}>
+                {cupProfile.map((item, i) => (
+                  <View key={i} style={styles.chip}>
+                    <Text style={styles.chipText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        ) : null}
+
+        {/* 保存日時 */}
+        {props.savedAt ? (
+          <View style={{ marginTop: 8 }}>
+            <Text style={styles.savedAtLabel}>{t.savedAt || "Saved at"}</Text>
+            <Text style={styles.savedAtValue}>
+              {formatDateValue(props.savedAt, lang)}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* フッター */}
+        <View style={styles.footer}>
+          <Text style={styles.footerMain}>flavorcoffeewheel.com</Text>
+        </View>
+
       </Page>
     </Document>
   );
