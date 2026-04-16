@@ -225,7 +225,7 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
     return topSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
 
-const getRing2Opacity = (seg) => {
+  const getRing2Opacity = (seg) => {
     if (!hasSelectedTop) return 0.12;
     if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.06;
     const anyMidSelected = ring2Segments.some(
@@ -255,21 +255,11 @@ const getRing2Opacity = (seg) => {
     return midAndLeafSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
 
-  const getRing3Opacity = (seg) => {
-    if (!hasSelectedTop) return 0.06;
-    if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.03;
-    const anyLeafSelected = ring3Segments.some(
-      (s) => s.parentMid === seg.parentMid && midAndLeafSet.has(normalizeLabelPdf(s.label))
-    );
-    if (!anyLeafSelected) return 0.35;
-    return midAndLeafSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
-  };
-
   return (
     <Svg width={340} height={340} viewBox="0 0 900 900">
       <G>
         <Path d="M 0 0 L 900 0 L 900 900 L 0 900 Z" fill="#e7e3dd" />
-{ring3Segments.filter((seg) => seg.drawBlock).map((seg, i) => (
+        {ring3Segments.filter((seg) => seg.drawBlock).map((seg, i) => (
           <Path
             key={`r3-${i}`}
             d={arcPath(cx, cy, ring3Inner, ring3Outer, seg.start, seg.end)}
