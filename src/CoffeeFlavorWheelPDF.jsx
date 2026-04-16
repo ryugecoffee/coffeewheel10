@@ -26,7 +26,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: {
     paddingTop: 26,
-    paddingBottom: 24,
+    paddingBottom: 60,
     paddingHorizontal: 24,
     fontSize: 10,
     color: "#222",
@@ -54,9 +54,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d9d6d0",
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 14,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   infoCardRow: {
     flexDirection: "row",
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   memoDivider: {
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: 8,
+    paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: "#e5e1da",
   },
@@ -103,13 +103,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   section: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontFamily: "NotoSansJP",
     fontSize: 11,
     fontWeight: "bold",
-    marginBottom: 6,
+    marginBottom: 4,
     color: "#444",
   },
   wheelCard: {
@@ -117,23 +117,23 @@ const styles = StyleSheet.create({
     borderColor: "#e5e1da",
     borderRadius: 10,
     backgroundColor: "#f5f2ed",
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
     alignItems: "center",
   },
   chipWrap: {
-    marginTop: 8,
+    marginTop: 6,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 6,
+    gap: 5,
   },
   chip: {
     borderWidth: 1,
     borderColor: "#d8d3cb",
     borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 7,
     backgroundColor: "#fff",
   },
   chipText: {
@@ -161,17 +161,20 @@ const styles = StyleSheet.create({
     bottom: 16,
     alignItems: "center",
   },
-  footerMain: {
+  footerLine1: {
     fontFamily: "NotoSansJP",
     fontSize: 8.5,
-    color: "#8e8e8e",
+    color: "#aaa",
     textAlign: "center",
   },
+  footerLine2: {
+    fontFamily: "NotoSansJP",
+    fontSize: 7.5,
+    color: "#bbb",
+    textAlign: "center",
+    marginTop: 2,
+  },
 });
-
-/* =========================
-   Utils
-========================= */
 
 function safeArray(value) {
   if (!Array.isArray(value)) return [];
@@ -209,10 +212,6 @@ function formatDateValue(value, language = "en") {
   }
 }
 
-/* =========================
-   Wheel SVG
-========================= */
-
 function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
   const { ring1Segments, ring2Segments, ring3Segments } = buildMainWheelSegments();
   const { cx, cy, ring1Inner, ring1Outer, ring2Inner, ring2Outer, ring3Inner, ring3Outer } = wheelConstants;
@@ -226,24 +225,25 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
     return topSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
 
-const getRing2Opacity = (seg) => {
-  if (!hasSelectedTop) return 0.12;
-  if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.06;
-  const anyMidSelected = ring2Segments.some(
-    (s) => s.parentTop === seg.parentTop && (
-      midAndLeafSet.has(normalizeLabelPdf(s.label)) ||
-      ring3Segments.some(
-        (leaf) => leaf.parentMid === s.label && midAndLeafSet.has(normalizeLabelPdf(leaf.label))
+  const getRing2Opacity = (seg) => {
+    if (!hasSelectedTop) return 0.12;
+    if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.06;
+    const anyMidSelected = ring2Segments.some(
+      (s) => s.parentTop === seg.parentTop && (
+        midAndLeafSet.has(normalizeLabelPdf(s.label)) ||
+        ring3Segments.some(
+          (leaf) => leaf.parentMid === s.label && midAndLeafSet.has(normalizeLabelPdf(leaf.label))
+        )
       )
-    )
-  );
-  if (!anyMidSelected) return 0.35;
-  const thisMidSelected = midAndLeafSet.has(normalizeLabelPdf(seg.label)) ||
-    ring3Segments.some(
-      (leaf) => leaf.parentMid === seg.label && midAndLeafSet.has(normalizeLabelPdf(leaf.label))
     );
-  return thisMidSelected ? 1 : 0.18;
-};
+    if (!anyMidSelected) return 0.35;
+    const thisMidSelected =
+      midAndLeafSet.has(normalizeLabelPdf(seg.label)) ||
+      ring3Segments.some(
+        (leaf) => leaf.parentMid === seg.label && midAndLeafSet.has(normalizeLabelPdf(leaf.label))
+      );
+    return thisMidSelected ? 1 : 0.18;
+  };
 
   const getRing3Opacity = (seg) => {
     if (!hasSelectedTop) return 0.06;
@@ -256,7 +256,7 @@ const getRing2Opacity = (seg) => {
   };
 
   return (
-    <Svg width={460} height={460} viewBox="0 0 900 900">
+    <Svg width={340} height={340} viewBox="0 0 900 900">
       <G>
         <Path d="M 0 0 L 900 0 L 900 900 L 0 900 Z" fill="#e7e3dd" />
         {ring3Segments.map((seg, i) => (
@@ -295,10 +295,6 @@ const getRing2Opacity = (seg) => {
   );
 }
 
-/* =========================
-   Export
-========================= */
-
 export default function CoffeeFlavorWheelPDF(props) {
   const t = getPdfText(props.language || "en");
   const lang = props.language || "en";
@@ -313,9 +309,6 @@ export default function CoffeeFlavorWheelPDF(props) {
     ...selectedMiddleLabels,
     ...selectedLeafLabels,
   ]);
-
-  const mainSelections = safeArray(props.note?.mainSelections ?? props.mainSelections);
-  const secondarySelections = safeArray(props.note?.secondarySelections ?? props.secondarySelections);
 
   return (
     <Document>
@@ -362,35 +355,35 @@ export default function CoffeeFlavorWheelPDF(props) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t.flavorNotes || "Flavor Notes"}</Text>
           <View style={styles.wheelCard}>
-<PdfFlavorWheel
-  mainSelections={selectedMainLabels}
-  secondarySelections={[...selectedMiddleLabels, ...selectedLeafLabels]}
-/>
+            <PdfFlavorWheel
+              mainSelections={selectedMainLabels}
+              secondarySelections={[...selectedMiddleLabels, ...selectedLeafLabels]}
+            />
           </View>
         </View>
 
-{allFlavors.length > 0 ? (
-  <View style={styles.chipWrap}>
-    {allFlavors.map((item, i) => (
-      <View key={i} style={styles.chip}>
-        <Text style={styles.chipText}>{translateFlavor(item, lang)}</Text>
-      </View>
-    ))}
-  </View>
-) : null}
+        {allFlavors.length > 0 ? (
+          <View style={styles.chipWrap}>
+            {allFlavors.map((item, i) => (
+              <View key={i} style={styles.chip}>
+                <Text style={styles.chipText}>{translateFlavor(item, lang)}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
-{cupProfile.length > 0 ? (
-  <View style={{ marginTop: 10 }}>
-    <Text style={styles.sectionTitle}>Cup Profile</Text>
-    <View style={styles.chipWrap}>
-      {cupProfile.map((item, i) => (
-        <View key={i} style={[styles.chip, { backgroundColor: "#f0f0f0" }]}>
-          <Text style={styles.chipText}>{item}</Text>
-        </View>
-      ))}
-    </View>
-  </View>
-) : null}
+        {cupProfile.length > 0 ? (
+          <View style={{ marginTop: 10 }}>
+            <Text style={styles.sectionTitle}>Cup Profile</Text>
+            <View style={styles.chipWrap}>
+              {cupProfile.map((item, i) => (
+                <View key={i} style={[styles.chip, { backgroundColor: "#f0f0f0" }]}>
+                  <Text style={styles.chipText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         {props.savedAt ? (
           <View style={{ marginTop: 10 }}>
@@ -400,7 +393,8 @@ export default function CoffeeFlavorWheelPDF(props) {
         ) : null}
 
         <View style={styles.footer}>
-          <Text style={styles.footerMain}>flavorcoffeewheel.com</Text>
+          <Text style={styles.footerLine1}>Another Day, Another Coffee</Text>
+          <Text style={styles.footerLine2}>Ryuge Coffee</Text>
         </View>
 
       </Page>
