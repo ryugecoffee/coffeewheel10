@@ -304,8 +304,7 @@ export default function CoffeeFlavorWheelPDF(props) {
   const selectedLeafLabels = safeArray(props.selectedLeafLabels);
   const cupProfile = safeArray(props.cupProfile);
 
-  const allFlavors = uniqueArray([
-    ...selectedMainLabels,
+const allFlavors = uniqueArray([
     ...selectedMiddleLabels,
     ...selectedLeafLabels,
   ]);
