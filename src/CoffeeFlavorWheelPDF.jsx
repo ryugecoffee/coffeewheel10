@@ -263,6 +263,66 @@ function renderTranslatedList(items, language) {
    Export
 ========================= */
 
+function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
+  const { ring1Segments, ring2Segments, ring3Segments } = buildMainWheelSegments();
+  const { cx, cy, ring1Inner, ring1Outer, ring2Inner, ring2Outer, ring3Inner, ring3Outer } = wheelConstants;
+
+  const normalizeLabel = (label) =>
+    String(label || "").replace(/\n/g, " ").replace(/\s+/g, " ").trim().toUpperCase();
+
+  const selectedSet = new Set([
+    ...mainSelections.map(normalizeLabel),
+    ...secondarySelections.map(normalizeLabel),
+  ]);
+
+  const isSelected = (label) => selectedSet.has(normalizeLabel(label));
+
+  const scale = 0.55;
+  const svgSize = 900 * scale;
+
+  return (
+    <Svg width={svgSize} height={svgSize} viewBox="0 0 900 900">
+      <G>
+        {/* Ring1 */}
+        {ring1Segments.map((seg, i) => (
+          <Path
+            key={`r1-${i}`}
+            d={arcPath(cx, cy, ring1Inner, ring1Outer, seg.start, seg.end)}
+            fill={isSelected(seg.label) ? seg.color : seg.color + "55"}
+            stroke="#fff"
+            strokeWidth={1}
+          />
+        ))}
+
+        {/* Ring2 */}
+        {ring2Segments.map((seg, i) => (
+          <Path
+            key={`r2-${i}`}
+            d={arcPath(cx, cy, ring2Inner, ring2Outer, seg.start, seg.end)}
+            fill={isSelected(seg.label) ? seg.color : seg.color + "44"}
+            stroke="#fff"
+            strokeWidth={1}
+          />
+        ))}
+
+        {/* Ring3 */}
+        {ring3Segments.map((seg, i) => (
+          <Path
+            key={`r3-${i}`}
+            d={arcPath(cx, cy, ring3Inner, ring3Outer, seg.start, seg.end)}
+            fill={isSelected(seg.label) ? seg.color : seg.color + "33"}
+            stroke="#fff"
+            strokeWidth={0.5}
+          />
+        ))}
+
+        {/* 中心円 */}
+        <Circle cx={cx} cy={cy} r={ring1Inner} fill="#f5f2ed" />
+      </G>
+    </Svg>
+  );
+}
+
 export default function CoffeeFlavorWheelPDF(props) {
   const t = getPdfText(props.language || "en");
   const lang = props.language || "en";
@@ -278,31 +338,26 @@ export default function CoffeeFlavorWheelPDF(props) {
     ...selectedLeafLabels,
   ]);
 
+  const mainSelections = safeArray(props.note?.mainSelections || props.mainSelections);
+  const secondarySelections = safeArray(props.note?.secondarySelections || props.secondarySelections);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
 
-        {/* タイトル行 */}
+        {/* タイトル */}
         <View style={styles.topInfoRow}>
           <View style={styles.topInfoBlock}>
-            <Text style={styles.topInfoValue}>
-              {safeText(props.country)}
-            </Text>
-            <Text style={{ fontSize: 8, color: "#888", marginTop: 2 }}>
-              {t.country || "Country"}
-            </Text>
+            <Text style={styles.topInfoValue}>{safeText(props.country)}</Text>
+            <Text style={{ fontSize: 8, color: "#888", marginTop: 2 }}>{t.country || "Country"}</Text>
           </View>
           <View style={styles.topInfoBlock}>
-            <Text style={styles.topInfoValue}>
-              {safeText(props.farm)}
-            </Text>
-            <Text style={{ fontSize: 8, color: "#888", marginTop: 2 }}>
-              {t.farm || "Farm"}
-            </Text>
+            <Text style={styles.topInfoValue}>{safeText(props.farm)}</Text>
+            <Text style={{ fontSize: 8, color: "#888", marginTop: 2 }}>{t.farm || "Farm"}</Text>
           </View>
         </View>
 
-        {/* 詳細情報カード */}
+        {/* 詳細情報 */}
         <View style={styles.infoCard}>
           <View style={styles.infoCardRow}>
             <View style={styles.boxedItem}>
@@ -322,7 +377,6 @@ export default function CoffeeFlavorWheelPDF(props) {
               <Text style={styles.boxedValue}>{safeText(props.roaster)}</Text>
             </View>
           </View>
-
           {props.memo ? (
             <View style={styles.memoDivider}>
               <Text style={styles.memoLabel}>{t.memo || "Memo"}</Text>
@@ -331,47 +385,33 @@ export default function CoffeeFlavorWheelPDF(props) {
           ) : null}
         </View>
 
-        {/* フレーバーノート */}
-        {allFlavors.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.flavorNotes || "Flavor Notes"}</Text>
-            <View style={styles.wheelCard}>
-              <View style={styles.chipWrap}>
-                {allFlavors.map((item, i) => (
-                  <View key={i} style={styles.chip}>
-                    <Text style={styles.chipText}>
-                      {translateFlavor(item, lang)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+        {/* フレーバーホイール */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t.flavorNotes || "Flavor Notes"}</Text>
+          <View style={styles.wheelCard}>
+            <PdfFlavorWheel
+              mainSelections={mainSelections}
+              secondarySelections={secondarySelections}
+            />
           </View>
-        ) : null}
+        </View>
 
-        {/* カッププロファイル */}
-        {cupProfile.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.cupProfile || "Cup Profile"}</Text>
-            <View style={styles.wheelCard}>
-              <View style={styles.chipWrap}>
-                {cupProfile.map((item, i) => (
-                  <View key={i} style={styles.chip}>
-                    <Text style={styles.chipText}>{item}</Text>
-                  </View>
-                ))}
+        {/* フレーバーチップ */}
+        {allFlavors.length > 0 ? (
+          <View style={styles.chipWrap}>
+            {allFlavors.map((item, i) => (
+              <View key={i} style={styles.chip}>
+                <Text style={styles.chipText}>{translateFlavor(item, lang)}</Text>
               </View>
-            </View>
+            ))}
           </View>
         ) : null}
 
         {/* 保存日時 */}
         {props.savedAt ? (
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginTop: 10 }}>
             <Text style={styles.savedAtLabel}>{t.savedAt || "Saved at"}</Text>
-            <Text style={styles.savedAtValue}>
-              {formatDateValue(props.savedAt, lang)}
-            </Text>
+            <Text style={styles.savedAtValue}>{formatDateValue(props.savedAt, lang)}</Text>
           </View>
         ) : null}
 
