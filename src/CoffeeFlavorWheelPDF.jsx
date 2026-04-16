@@ -226,15 +226,24 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
     return topSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
 
-  const getRing2Opacity = (seg) => {
-    if (!hasSelectedTop) return 0.12;
-    if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.06;
-    const anyMidSelected = ring2Segments.some(
-      (s) => s.parentTop === seg.parentTop && midAndLeafSet.has(normalizeLabelPdf(s.label))
+const getRing2Opacity = (seg) => {
+  if (!hasSelectedTop) return 0.12;
+  if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.06;
+  const anyMidSelected = ring2Segments.some(
+    (s) => s.parentTop === seg.parentTop && (
+      midAndLeafSet.has(normalizeLabelPdf(s.label)) ||
+      ring3Segments.some(
+        (leaf) => leaf.parentMid === s.label && midAndLeafSet.has(normalizeLabelPdf(leaf.label))
+      )
+    )
+  );
+  if (!anyMidSelected) return 0.35;
+  const thisMidSelected = midAndLeafSet.has(normalizeLabelPdf(seg.label)) ||
+    ring3Segments.some(
+      (leaf) => leaf.parentMid === seg.label && midAndLeafSet.has(normalizeLabelPdf(leaf.label))
     );
-    if (!anyMidSelected) return 0.35;
-    return midAndLeafSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
-  };
+  return thisMidSelected ? 1 : 0.18;
+};
 
   const getRing3Opacity = (seg) => {
     if (!hasSelectedTop) return 0.06;
@@ -360,15 +369,28 @@ export default function CoffeeFlavorWheelPDF(props) {
           </View>
         </View>
 
-        {allFlavors.length > 0 ? (
-          <View style={styles.chipWrap}>
-            {allFlavors.map((item, i) => (
-              <View key={i} style={styles.chip}>
-                <Text style={styles.chipText}>{translateFlavor(item, lang)}</Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
+{allFlavors.length > 0 ? (
+  <View style={styles.chipWrap}>
+    {allFlavors.map((item, i) => (
+      <View key={i} style={styles.chip}>
+        <Text style={styles.chipText}>{translateFlavor(item, lang)}</Text>
+      </View>
+    ))}
+  </View>
+) : null}
+
+{cupProfile.length > 0 ? (
+  <View style={{ marginTop: 10 }}>
+    <Text style={styles.sectionTitle}>Cup Profile</Text>
+    <View style={styles.chipWrap}>
+      {cupProfile.map((item, i) => (
+        <View key={i} style={[styles.chip, { backgroundColor: "#f0f0f0" }]}>
+          <Text style={styles.chipText}>{item}</Text>
+        </View>
+      ))}
+    </View>
+  </View>
+) : null}
 
         {props.savedAt ? (
           <View style={{ marginTop: 10 }}>
