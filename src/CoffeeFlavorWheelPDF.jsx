@@ -16,7 +16,7 @@ import { buildMainWheelSegments } from "./wheelGeometry";
 
 Font.register({
   family: "NotoSansJP",
-  src: "/fonts/NotoSansJP-Regular.ttf",
+  src: "https://flavorcoffeewheel.com/fonts/NotoSansJP-Regular.ttf",
 });
 
 const styles = StyleSheet.create({
