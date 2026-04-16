@@ -223,37 +223,55 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
   ]);
 
   const isSelected = (label) => selectedSet.has(normalizeLabelPdf(label));
+  const hasSelectedTop = mainSelections.length > 0;
+
+  const getRing1Fill = (seg) => {
+    if (!hasSelectedTop) return seg.color + "40";
+    return isSelected(seg.label) ? seg.color : seg.color + "20";
+  };
+
+  const getRing2Fill = (seg) => {
+    if (!hasSelectedTop) return seg.color + "25";
+    if (!isSelected(seg.parentTop)) return seg.color + "10";
+    return isSelected(seg.label) ? seg.color : seg.color + "30";
+  };
+
+  const getRing3Fill = (seg) => {
+    if (!hasSelectedTop) return seg.color + "15";
+    if (!isSelected(seg.parentTop)) return seg.color + "08";
+    return isSelected(seg.label) ? seg.color : seg.color + "20";
+  };
 
   const svgSize = 495;
 
   return (
     <Svg width={svgSize} height={svgSize} viewBox="0 0 900 900">
       <G>
-        {ring1Segments.map((seg, i) => (
+        {ring3Segments.map((seg, i) => (
           <Path
-            key={`r1-${i}`}
-            d={arcPath(cx, cy, ring1Inner, ring1Outer, seg.start, seg.end)}
-            fill={isSelected(seg.label) ? seg.color : seg.color + "55"}
-            stroke="#fff"
-            strokeWidth={1}
+            key={`r3-${i}`}
+            d={arcPath(cx, cy, ring3Inner, ring3Outer, seg.start, seg.end)}
+            fill={getRing3Fill(seg)}
+            stroke="#e7e3dd"
+            strokeWidth={0.8}
           />
         ))}
         {ring2Segments.map((seg, i) => (
           <Path
             key={`r2-${i}`}
             d={arcPath(cx, cy, ring2Inner, ring2Outer, seg.start, seg.end)}
-            fill={isSelected(seg.label) ? seg.color : seg.color + "44"}
-            stroke="#fff"
+            fill={getRing2Fill(seg)}
+            stroke="#e7e3dd"
             strokeWidth={1}
           />
         ))}
-        {ring3Segments.map((seg, i) => (
+        {ring1Segments.map((seg, i) => (
           <Path
-            key={`r3-${i}`}
-            d={arcPath(cx, cy, ring3Inner, ring3Outer, seg.start, seg.end)}
-            fill={isSelected(seg.label) ? seg.color : seg.color + "33"}
-            stroke="#fff"
-            strokeWidth={0.5}
+            key={`r1-${i}`}
+            d={arcPath(cx, cy, ring1Inner, ring1Outer, seg.start, seg.end)}
+            fill={getRing1Fill(seg)}
+            stroke="#e7e3dd"
+            strokeWidth={1.5}
           />
         ))}
         <Circle cx={cx} cy={cy} r={ring1Inner} fill="#f5f2ed" />
@@ -329,10 +347,10 @@ export default function CoffeeFlavorWheelPDF(props) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t.flavorNotes || "Flavor Notes"}</Text>
           <View style={styles.wheelCard}>
-            <PdfFlavorWheel
-              mainSelections={mainSelections}
-              secondarySelections={secondarySelections}
-            />
+<PdfFlavorWheel
+  mainSelections={selectedMainLabels}
+  secondarySelections={[...selectedMiddleLabels, ...selectedLeafLabels]}
+/>
           </View>
         </View>
 
