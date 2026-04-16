@@ -217,64 +217,70 @@ function PdfFlavorWheel({ mainSelections = [], secondarySelections = [] }) {
   const { ring1Segments, ring2Segments, ring3Segments } = buildMainWheelSegments();
   const { cx, cy, ring1Inner, ring1Outer, ring2Inner, ring2Outer, ring3Inner, ring3Outer } = wheelConstants;
 
-  const selectedSet = new Set([
-    ...mainSelections.map(normalizeLabelPdf),
-    ...secondarySelections.map(normalizeLabelPdf),
-  ]);
+  const topSet = new Set(mainSelections.map(normalizeLabelPdf));
+  const midAndLeafSet = new Set(secondarySelections.map(normalizeLabelPdf));
+  const hasSelectedTop = topSet.size > 0;
 
-  const isSelected = (label) => selectedSet.has(normalizeLabelPdf(label));
-  const hasSelectedTop = mainSelections.length > 0;
-
-  const getRing1Fill = (seg) => {
-    if (!hasSelectedTop) return seg.color + "40";
-    return isSelected(seg.label) ? seg.color : seg.color + "20";
+  const getRing1Opacity = (seg) => {
+    if (!hasSelectedTop) return 1;
+    return topSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
 
-  const getRing2Fill = (seg) => {
-    if (!hasSelectedTop) return seg.color + "25";
-    if (!isSelected(seg.parentTop)) return seg.color + "10";
-    return isSelected(seg.label) ? seg.color : seg.color + "30";
+  const getRing2Opacity = (seg) => {
+    if (!hasSelectedTop) return 0.12;
+    if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.06;
+    const anyMidSelected = ring2Segments.some(
+      (s) => s.parentTop === seg.parentTop && midAndLeafSet.has(normalizeLabelPdf(s.label))
+    );
+    if (!anyMidSelected) return 0.35;
+    return midAndLeafSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
 
-  const getRing3Fill = (seg) => {
-    if (!hasSelectedTop) return seg.color + "15";
-    if (!isSelected(seg.parentTop)) return seg.color + "08";
-    return isSelected(seg.label) ? seg.color : seg.color + "20";
+  const getRing3Opacity = (seg) => {
+    if (!hasSelectedTop) return 0.06;
+    if (!topSet.has(normalizeLabelPdf(seg.parentTop))) return 0.03;
+    const anyLeafSelected = ring3Segments.some(
+      (s) => s.parentMid === seg.parentMid && midAndLeafSet.has(normalizeLabelPdf(s.label))
+    );
+    if (!anyLeafSelected) return 0.35;
+    return midAndLeafSet.has(normalizeLabelPdf(seg.label)) ? 1 : 0.18;
   };
-
-  const svgSize = 495;
 
   return (
-    <Svg width={svgSize} height={svgSize} viewBox="0 0 900 900">
+    <Svg width={460} height={460} viewBox="0 0 900 900">
       <G>
+        <Path d="M 0 0 L 900 0 L 900 900 L 0 900 Z" fill="#e7e3dd" />
         {ring3Segments.map((seg, i) => (
           <Path
             key={`r3-${i}`}
             d={arcPath(cx, cy, ring3Inner, ring3Outer, seg.start, seg.end)}
-            fill={getRing3Fill(seg)}
+            fill={seg.color}
+            fillOpacity={getRing3Opacity(seg)}
             stroke="#e7e3dd"
-            strokeWidth={0.8}
+            strokeWidth={1}
           />
         ))}
         {ring2Segments.map((seg, i) => (
           <Path
             key={`r2-${i}`}
             d={arcPath(cx, cy, ring2Inner, ring2Outer, seg.start, seg.end)}
-            fill={getRing2Fill(seg)}
+            fill={seg.color}
+            fillOpacity={getRing2Opacity(seg)}
             stroke="#e7e3dd"
-            strokeWidth={1}
+            strokeWidth={1.5}
           />
         ))}
         {ring1Segments.map((seg, i) => (
           <Path
             key={`r1-${i}`}
             d={arcPath(cx, cy, ring1Inner, ring1Outer, seg.start, seg.end)}
-            fill={getRing1Fill(seg)}
+            fill={seg.color}
+            fillOpacity={getRing1Opacity(seg)}
             stroke="#e7e3dd"
-            strokeWidth={1.5}
+            strokeWidth={2}
           />
         ))}
-        <Circle cx={cx} cy={cy} r={ring1Inner} fill="#f5f2ed" />
+        <Circle cx={cx} cy={cy} r={ring1Inner} fill="#f7f4ef" />
       </G>
     </Svg>
   );
