@@ -1,8 +1,3 @@
-Font.register({
-  family: "NotoSansJP",
-  src: "/fonts/NotoSansJP-Regular.ttf",
-});
-
 import {
   Document,
   Page,
@@ -21,7 +16,7 @@ import { buildMainWheelSegments } from "./wheelGeometry";
 
 Font.register({
   family: "NotoSansJP",
-  src: NotoSansJPRegular,
+  src: "/fonts/NotoSansJP-Regular.ttf",
 });
 
 const styles = StyleSheet.create({
