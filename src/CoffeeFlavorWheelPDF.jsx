@@ -20,7 +20,7 @@ import {
 
 Font.register({
   family: "NotoSansJP",
-  src: "https://flavorcoffeewheel.com/fonts/NotoSansJP-Regular.ttf",
+  src: "/fonts/NotoSansJP-Regular.woff",
 });
 
 const styles = StyleSheet.create({
